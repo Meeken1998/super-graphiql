@@ -46,6 +46,7 @@ export default {
       treeData: [],
       draverShow: false,
       dic: {},
+      sdic: {},
       searchValue: "",
       searchResult: []
     };
@@ -250,9 +251,6 @@ export default {
                       h(
                         "span",
                         {
-                          // props: {
-                          //   type: "ios-document-outline"
-                          // },
                           style: {
                             padding: "3px 6px",
                             backgroundColor:
@@ -261,7 +259,6 @@ export default {
                                 : data.kind) == "NON_NULL"
                                 ? "#979696"
                                 : "#02ab63",
-                            fontSize: "10px",
                             fontWeight: "bold",
                             color: "#fff",
                             borderRadius: "3px",
@@ -431,6 +428,13 @@ export default {
         let insert = name2title(oldObject[keys]);
         if (insert["name"] == "Query" || insert["name"] == "Mutation") {
           newObject.unshift(insert);
+          try {
+            for(let i = 0; i < insert['fields'].length; i++) {
+              this.dic[insert['fields'][i]['name']] = insert['fields'][i];
+            }
+          } finally {
+
+          }
         } else if (
           insert["kind"] !== "SCALAR" &&
           insert["kind"] !== "ENUM" &&
@@ -481,7 +485,7 @@ export default {
 
     selectSearchItem(e) {
       if (this.dic[e]) {
-        this.searchValue = ""
+        this.searchValue = "";
         this.setApiInfo({ info: this.dic[e] });
         this.setHistoryList(this.dic[e]);
         this.changeDrawerShow({ show: true });
@@ -503,8 +507,16 @@ export default {
   border-right: 1px solid #f3f3f3;
 }
 
-.leftBar span:active {
+.leftBar span {
+  transition: all 0.3s;
+}
+
+.leftBar span:hover {
   color: #57a3f3;
+}
+
+.leftBar span:active {
+  color: #4487cf;
 }
 
 .ivu-select-dropdown {
