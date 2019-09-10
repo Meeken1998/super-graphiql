@@ -3,8 +3,26 @@
     <draver />
     <Row align="top" justify="start">
       <i-col :xs="12" :sm="12" :md="6" :lg="6" class="leftBar">
-        <Input search enter-button placeholder="Enter something..." />
-        <Tree :data="treeData"></Tree>
+        <!-- <Dropdown trigger="custom" :visible="dropdownShow" style="width: 100%;max-height: 500px;">
+          <Input
+            v-model="searchValue"
+            search
+            enter-button
+            placeholder="Enter something..."
+            @on-search="findInDic"
+          />
+          <DropdownMenu slot="list">
+            <DropdownItem v-for="(item, index) in searchResult" :key="index">{{ item.name }}</DropdownItem>
+          </DropdownMenu>
+        </Dropdown>-->
+        <AutoComplete
+          v-model="searchValue"
+          :data="searchResult"
+          @on-search="findInDic"
+          placeholder="Enter something..."
+          style="width: 100%;"
+        ></AutoComplete>
+        <Tree :data="treeData" @on-select-change="selectChange"></Tree>
       </i-col>
     </Row>
   </div>
@@ -20,20 +38,39 @@ export default {
   components: { draver },
   data() {
     return {
+      dropdownShow: false,
       editValue: "",
       res: {},
       treeData: [],
-      draverShow: false
+      draverShow: false,
+      dic: {},
+      searchValue: "",
+      searchResult: []
     };
   },
   computed: {
     ...mapGetters("apollo", ["drawerShow"])
   },
+  watch: {
+    searchValue() {
+      if (this.searchValue == "") {
+        this.dropdownShow = false;
+        this.searchResult = [];
+      } else {
+        this.findInDic();
+      }
+    }
+  },
   mounted() {
     this.getList();
   },
   methods: {
-    ...mapActions("apollo", ["changeDrawerShow", "setApiInfo"]),
+    ...mapActions("apollo", [
+      "changeDrawerShow",
+      "setApiInfo",
+      "setDic",
+      "setHistoryList"
+    ]),
     async getList() {
       localStorage.setItem(
         "token",
@@ -151,31 +188,41 @@ export default {
       // 将数据转化为树状组件能显示的
       let oldObject = this.res;
       let newObject = [];
-      let name2title = obj_ => {
+      let name2title = (obj_, type__) => {
         let tmp = obj_;
         if (tmp["name"] && typeof tmp["name"] == "string") {
           tmp["title"] = tmp["name"];
+          let type_ = null;
+          if (tmp["title"] == "Query" || tmp["title"] == "Mutation") {
+            type_ = tmp["title"];
+          } else {
+            type_ = "Schema";
+          }
+          if (type__) {
+            type_ = type__;
+          }
+          tmp["type_"] = type_;
           if (
             tmp["fields"] &&
             typeof tmp["fields"] == "object" &&
             tmp["fields"].length > 0
           ) {
             tmp["expend"] = true;
-            tmp = fields2children(tmp);
+            tmp = fields2children(tmp, type_);
           } else if (
             tmp["args"] &&
             typeof tmp["args"] == "object" &&
             tmp["args"].length > 0
           ) {
             tmp["expend"] = true;
-            tmp = args2children(tmp);
+            tmp = args2children(tmp, type_);
           } else if (
             tmp["inputFields"] &&
             typeof tmp["inputFields"] == "object" &&
             tmp["inputFields"].length > 0
           ) {
             tmp["expend"] = true;
-            tmp = input_fields2children(tmp);
+            tmp = input_fields2children(tmp, type_);
           } else {
             tmp["render"] = (h, { root, node, data }) => {
               let that = this;
@@ -220,11 +267,12 @@ export default {
                             fontSize: "9px"
                           }
                         },
-                        typeof data.type == "object"
+                        (typeof data.type == "object"
                           ? data.type.name
                             ? data.type.name
                             : data.type.kind
                           : data.kind
+                        ).replace("NON_NULL", "必填")
                       ),
                       h("span", data.title)
                     ]
@@ -236,12 +284,15 @@ export default {
         }
         return tmp;
       };
-      let input_fields2children = obj_ => {
+      let input_fields2children = (obj_, type_) => {
         let tmp = obj_;
         if (tmp["inputFields"]) {
           let children = tmp["inputFields"];
           for (let idx = 0; idx < children.length; idx++) {
-            children[idx] = name2title(children[idx]);
+            if (type_) {
+              children[idx]["_type"] = type_;
+            }
+            children[idx] = name2title(children[idx], type_ || null);
           }
           tmp["children"] = children;
           tmp["render"] = (h, { root, node, data }) => {
@@ -281,12 +332,15 @@ export default {
         }
         return tmp;
       };
-      let fields2children = obj_ => {
+      let fields2children = (obj_, type_) => {
         let tmp = obj_;
         if (tmp["fields"]) {
           let children = tmp["fields"];
           for (let idx = 0; idx < children.length; idx++) {
-            children[idx] = name2title(children[idx]);
+            if (type_) {
+              children[idx]["_type"] = type_;
+            }
+            children[idx] = name2title(children[idx], type_ || null);
           }
           tmp["children"] = children;
           tmp["render"] = (h, { root, node, data }) => {
@@ -326,12 +380,15 @@ export default {
         }
         return tmp;
       };
-      let args2children = obj_ => {
+      let args2children = (obj_, type_) => {
         let tmp = obj_;
         if (tmp["args"]) {
           let children = tmp["args"];
           for (let idx = 0; idx < children.length; idx++) {
-            children[idx] = name2title(children[idx]);
+            if (type_) {
+              children[idx]["_type"] = type_;
+            }
+            children[idx] = name2title(children[idx], type_ || null);
           }
           tmp["children"] = children;
           tmp["render"] = (h, { root, node, data }) => {
@@ -378,6 +435,7 @@ export default {
           insert["name"].indexOf("__") == -1
         ) {
           newObject.push(insert);
+          this.dic[insert["name"]] = insert;
         }
       }
       let o1 = newObject[0];
@@ -385,12 +443,38 @@ export default {
       newObject[0] = o2;
       newObject[1] = o1;
       this.treeData = newObject;
+      this.setDic(this.dic);
+      localStorage.setItem("dic", JSON.stringify(this.dic));
     },
 
     showAPIInfo(info) {
-      alert(JSON.stringify(info));
+      //alert(JSON.stringify(info));
       this.setApiInfo({ info: info });
+      this.setHistoryList(info);
       this.changeDrawerShow({ show: true });
+    },
+
+    selectChange(e) {
+      alert(JSON.stringify(e));
+    },
+
+    findInDic() {
+      if (this.searchValue !== "") {
+        this.dropdownShow = false;
+        let val = this.searchValue;
+        let dic = this.dic;
+        let arr = [];
+        for (let key in dic) {
+          if (key.indexOf(val) > -1) {
+            arr.push(dic[key].name);
+          }
+        }
+        // alert(JSON.stringify(arr));
+        this.searchResult = arr;
+        if (arr.length > 0) {
+          this.dropdownShow = true;
+        }
+      }
     }
   }
 };
@@ -418,5 +502,15 @@ export default {
 
 a {
   color: #515a6e !important;
+}
+
+.ivu-select-dropdown {
+  max-height: 600px !important;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.ivu-auto-complete.ivu-select-dropdown {
+  max-height: 600px !important;
 }
 </style>
