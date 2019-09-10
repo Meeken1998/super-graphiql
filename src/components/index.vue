@@ -27,21 +27,21 @@
         <Tree :data="treeData" @on-select-change="selectChange"></Tree>
       </i-col>
       <i-col :xs="12" :sm="12" :md="12" :lg="12">
-        <!-- <MonacoEditor class="editor" v-model="code" language="javascript" /> -->
+        <MonacoEditor class="editor" v-model="code" language="javascript" />
       </i-col>
     </Row>
   </div>
 </template>
 
 <script>
-//import MonacoEditor from "vue-monaco";
+import MonacoEditor from "vue-monaco";
 import graphqlQuery from "@/apollo/query";
 import gql from "graphql-tag";
 import draver from "./draver";
 import { mapGetters, mapActions } from "vuex";
 export default {
   name: "ApolloPage",
-  components: { draver },
+  components: { draver, MonacoEditor },
   data() {
     return {
       code: "",
