@@ -480,15 +480,11 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .editor {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
-}
-
-.ivu-tree ul {
-  font-size: 18px;
 }
 
 .leftBar {
