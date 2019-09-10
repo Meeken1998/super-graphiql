@@ -26,11 +26,15 @@
         ></AutoComplete>
         <Tree :data="treeData" @on-select-change="selectChange"></Tree>
       </i-col>
+      <i-col :xs="12" :sm="12" :md="12" :lg="12">
+        <!-- <MonacoEditor class="editor" v-model="code" language="javascript" /> -->
+      </i-col>
     </Row>
   </div>
 </template>
 
 <script>
+//import MonacoEditor from "vue-monaco";
 import graphqlQuery from "@/apollo/query";
 import gql from "graphql-tag";
 import draver from "./draver";
@@ -40,13 +44,13 @@ export default {
   components: { draver },
   data() {
     return {
+      code: "",
       dropdownShow: false,
       editValue: "",
       res: {},
       treeData: [],
       draverShow: false,
       dic: {},
-      sdic: {},
       searchValue: "",
       searchResult: []
     };
@@ -429,11 +433,10 @@ export default {
         if (insert["name"] == "Query" || insert["name"] == "Mutation") {
           newObject.unshift(insert);
           try {
-            for(let i = 0; i < insert['fields'].length; i++) {
-              this.dic[insert['fields'][i]['name']] = insert['fields'][i];
+            for (let i = 0; i < insert["fields"].length; i++) {
+              this.dic[insert["fields"][i]["name"]] = insert["fields"][i];
             }
           } finally {
-
           }
         } else if (
           insert["kind"] !== "SCALAR" &&
