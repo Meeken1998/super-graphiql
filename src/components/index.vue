@@ -26,7 +26,7 @@
         ></AutoComplete>
         <Tree :data="treeData" @on-select-change="selectChange"></Tree>
       </i-col>
-      <i-col :xs="12" :sm="12" :md="12" :lg="12">
+      <i-col :xs="12" :sm="12" :md="12" :lg="12" style="height: 500px; width: 500px;">
         <MonacoEditor class="editor" v-model="code" language="javascript" />
       </i-col>
     </Row>
@@ -34,56 +34,56 @@
 </template>
 
 <script>
-import MonacoEditor from "vue-monaco";
-import graphqlQuery from "@/apollo/query";
-import gql from "graphql-tag";
-import draver from "./draver";
-import { mapGetters, mapActions } from "vuex";
+import MonacoEditor from 'vue-monaco';
+import graphqlQuery from '@/apollo/query';
+import gql from 'graphql-tag';
+import draver from './draver';
+import { mapGetters, mapActions } from 'vuex';
 export default {
-  name: "ApolloPage",
+  name: 'ApolloPage',
   components: { draver, MonacoEditor },
-  data() {
+  data () {
     return {
-      code: "",
+      code: '',
       dropdownShow: false,
-      editValue: "",
+      editValue: '',
       res: {},
       treeData: [],
       draverShow: false,
       dic: {},
-      searchValue: "",
+      searchValue: '',
       searchResult: []
-    };
+    }
   },
   computed: {
-    ...mapGetters("apollo", ["drawerShow"])
+    ...mapGetters('apollo', ['drawerShow'])
   },
   watch: {
-    searchValue() {
-      if (this.searchValue == "") {
-        this.dropdownShow = false;
-        this.searchResult = [];
+    searchValue () {
+      if (this.searchValue == '') {
+        this.dropdownShow = false
+        this.searchResult = []
       } else {
-        this.findInDic();
+        this.findInDic()
       }
     }
   },
-  mounted() {
-    this.getList();
+  mounted () {
+    this.getList()
   },
   methods: {
-    ...mapActions("apollo", [
-      "changeDrawerShow",
-      "setApiInfo",
-      "setDic",
-      "setHistoryList"
+    ...mapActions('apollo', [
+      'changeDrawerShow',
+      'setApiInfo',
+      'setDic',
+      'setHistoryList'
     ]),
-    async getList() {
+    async getList () {
       localStorage.setItem(
-        "token",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
-      );
-      let that = this;
+        'token',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g'
+      )
+      let that = this
       let res = await graphqlQuery({
         query: gql`
           query IntrospectionQuery {
@@ -184,318 +184,318 @@ export default {
           }
         `,
         variables: {}
-      });
+      })
       if (res.data && res.data.__schema && res.data.__schema.types) {
-        that.res = res.data.__schema.types;
-        this.startDeal();
+        that.res = res.data.__schema.types
+        this.startDeal()
       }
     },
 
-    startDeal() {
+    startDeal () {
       // 将数据转化为树状组件能显示的
-      let oldObject = this.res;
-      let newObject = [];
+      let oldObject = this.res
+      let newObject = []
       let name2title = (obj_, type__) => {
-        let tmp = obj_;
-        if (tmp["name"] && typeof tmp["name"] == "string") {
-          tmp["title"] = tmp["name"];
-          let type_ = null;
-          if (tmp["title"] == "Query" || tmp["title"] == "Mutation") {
-            type_ = tmp["title"];
+        let tmp = obj_
+        if (tmp['name'] && typeof tmp['name'] === 'string') {
+          tmp['title'] = tmp['name']
+          let type_ = null
+          if (tmp['title'] == 'Query' || tmp['title'] == 'Mutation') {
+            type_ = tmp['title']
           } else {
-            type_ = "Schema";
+            type_ = 'Schema';
           }
           if (type__) {
-            type_ = type__;
+            type_ = type__
           }
-          tmp["type_"] = type_;
+          tmp['type_'] = type_
           if (
-            tmp["fields"] &&
-            typeof tmp["fields"] == "object" &&
-            tmp["fields"].length > 0
+            tmp['fields'] &&
+            typeof tmp['fields'] === 'object' &&
+            tmp['fields'].length > 0
           ) {
-            tmp["expend"] = true;
-            tmp = fields2children(tmp, type_);
+            tmp['expend'] = true
+            tmp = fields2children(tmp, type_)
           } else if (
-            tmp["args"] &&
-            typeof tmp["args"] == "object" &&
-            tmp["args"].length > 0
+            tmp['args'] &&
+            typeof tmp['args'] === 'object' &&
+            tmp['args'].length > 0
           ) {
-            tmp["expend"] = true;
-            tmp = args2children(tmp, type_);
+            tmp['expend'] = true
+            tmp = args2children(tmp, type_)
           } else if (
-            tmp["inputFields"] &&
-            typeof tmp["inputFields"] == "object" &&
-            tmp["inputFields"].length > 0
+            tmp['inputFields'] &&
+            typeof tmp['inputFields'] === 'object' &&
+            tmp['inputFields'].length > 0
           ) {
-            tmp["expend"] = true;
-            tmp = input_fields2children(tmp, type_);
+            tmp['expend'] = true
+            tmp = input_fields2children(tmp, type_)
           } else {
-            tmp["render"] = (h, { root, node, data }) => {
-              let that = this;
+            tmp['render'] = (h, { root, node, data }) => {
+              let that = this
               return h(
-                "span",
+                'span',
                 {
                   style: {
-                    display: "inline-block",
-                    width: "100%"
+                    display: 'inline-block',
+                    width: '100%'
                   }
                 },
                 [
                   h(
-                    "span",
+                    'span',
                     {
                       on: {
-                        click(e) {
-                          that.showAPIInfo(data);
+                        click (e) {
+                          that.showAPIInfo(data)
                         }
                       }
                     },
                     [
                       h(
-                        "span",
+                        'span',
                         {
                           style: {
-                            padding: "3px 6px",
+                            padding: '3px 6px',
                             backgroundColor:
-                              (typeof data.type == "object"
+                              (typeof data.type === 'object'
                                 ? data.type.kind
-                                : data.kind) == "NON_NULL"
-                                ? "#979696"
-                                : "#02ab63",
-                            fontWeight: "bold",
-                            color: "#fff",
-                            borderRadius: "3px",
-                            marginRight: "8px",
-                            fontSize: "9px"
+                                : data.kind) == 'NON_NULL'
+                                ? '#979696'
+                                : '#02ab63',
+                            fontWeight: 'bold',
+                            color: '#fff',
+                            borderRadius: '3px',
+                            marginRight: '8px',
+                            fontSize: '9px'
                           }
                         },
-                        (typeof data.type == "object"
+                        (typeof data.type === 'object'
                           ? data.type.name
                             ? data.type.name
                             : data.type.kind
                           : data.kind
-                        ).replace("NON_NULL", "必填")
+                        ).replace('NON_NULL', '必填')
                       ),
-                      h("span", data.title)
+                      h('span', data.title)
                     ]
                   )
                 ]
-              );
+              )
             };
           }
         }
-        return tmp;
+        return tmp
       };
       let input_fields2children = (obj_, type_) => {
-        let tmp = obj_;
-        if (tmp["inputFields"]) {
-          let children = tmp["inputFields"];
+        let tmp = obj_
+        if (tmp['inputFields']) {
+          let children = tmp['inputFields']
           for (let idx = 0; idx < children.length; idx++) {
             if (type_) {
-              children[idx]["_type"] = type_;
+              children[idx]['_type'] = type_
             }
-            children[idx] = name2title(children[idx], type_ || null);
+            children[idx] = name2title(children[idx], type_ || null)
           }
-          tmp["children"] = children;
-          tmp["render"] = (h, { root, node, data }) => {
-            let that = this;
+          tmp['children'] = children
+          tmp['render'] = (h, { root, node, data }) => {
+            let that = this
             return h(
-              "span",
+              'span',
               {
                 style: {
-                  display: "inline-block",
-                  width: "100%",
-                  cursor: "pointer"
+                  display: 'inline-block',
+                  width: '100%',
+                  cursor: 'pointer'
                 },
                 on: {
-                  click() {
-                    that.showAPIInfo(data);
+                  click () {
+                    that.showAPIInfo(data)
                   }
                 }
               },
               [
-                h("span", [
-                  h("Icon", {
+                h('span', [
+                  h('Icon', {
                     props: {
                       type:
-                        data.title == "Query" || data.title == "Mutation"
-                          ? "ios-paper-plane-outline"
-                          : "ios-git-branch"
+                        data.title == 'Query' || data.title == 'Mutation'
+                          ? 'ios-paper-plane-outline'
+                          : 'ios-git-branch'
                     },
                     style: {
-                      marginRight: "8px"
+                      marginRight: '8px'
                     }
                   }),
-                  h("span", data.title)
+                  h('span', data.title)
                 ])
               ]
-            );
+            )
           };
         }
-        return tmp;
+        return tmp
       };
       let fields2children = (obj_, type_) => {
-        let tmp = obj_;
-        if (tmp["fields"]) {
-          let children = tmp["fields"];
+        let tmp = obj_
+        if (tmp['fields']) {
+          let children = tmp['fields']
           for (let idx = 0; idx < children.length; idx++) {
             if (type_) {
-              children[idx]["_type"] = type_;
+              children[idx]['_type'] = type_
             }
-            children[idx] = name2title(children[idx], type_ || null);
+            children[idx] = name2title(children[idx], type_ || null)
           }
-          tmp["children"] = children;
-          tmp["render"] = (h, { root, node, data }) => {
-            let that = this;
+          tmp['children'] = children
+          tmp['render'] = (h, { root, node, data }) => {
+            let that = this
             return h(
-              "span",
+              'span',
               {
                 style: {
-                  display: "inline-block",
-                  width: "100%",
-                  cursor: "pointer"
+                  display: 'inline-block',
+                  width: '100%',
+                  cursor: 'pointer'
                 },
                 on: {
-                  click() {
-                    that.showAPIInfo(data);
+                  click () {
+                    that.showAPIInfo(data)
                   }
                 }
               },
               [
-                h("span", [
-                  h("Icon", {
+                h('span', [
+                  h('Icon', {
                     props: {
                       type:
-                        data.title == "Query" || data.title == "Mutation"
-                          ? "ios-paper-plane-outline"
-                          : "ios-git-branch"
+                        data.title == 'Query' || data.title == 'Mutation'
+                          ? 'ios-paper-plane-outline'
+                          : 'ios-git-branch'
                     },
                     style: {
-                      marginRight: "8px"
+                      marginRight: '8px'
                     }
                   }),
-                  h("span", data.title)
+                  h('span', data.title)
                 ])
               ]
-            );
+            )
           };
         }
-        return tmp;
+        return tmp
       };
       let args2children = (obj_, type_) => {
-        let tmp = obj_;
-        if (tmp["args"]) {
-          let children = tmp["args"];
+        let tmp = obj_
+        if (tmp['args']) {
+          let children = tmp['args']
           for (let idx = 0; idx < children.length; idx++) {
             if (type_) {
-              children[idx]["_type"] = type_;
+              children[idx]['_type'] = type_
             }
-            children[idx] = name2title(children[idx], type_ || null);
+            children[idx] = name2title(children[idx], type_ || null)
           }
-          tmp["children"] = children;
-          tmp["render"] = (h, { root, node, data }) => {
-            let that = this;
+          tmp['children'] = children
+          tmp['render'] = (h, { root, node, data }) => {
+            let that = this
             return h(
-              "span",
+              'span',
               {
                 style: {
-                  display: "inline-block",
-                  width: "100%",
-                  cursor: "pointer"
+                  display: 'inline-block',
+                  width: '100%',
+                  cursor: 'pointer'
                 },
                 on: {
-                  click() {
-                    that.showAPIInfo(data);
+                  click () {
+                    that.showAPIInfo(data)
                   }
                 }
               },
               [
-                h("span", [
-                  h("Icon", {
+                h('span', [
+                  h('Icon', {
                     props: {
-                      type: "ios-list-box-outline"
+                      type: 'ios-list-box-outline'
                     },
                     style: {
-                      marginRight: "8px"
+                      marginRight: '8px'
                     }
                   }),
-                  h("span", data.title)
+                  h('span', data.title)
                 ])
               ]
-            );
+            )
           };
         }
-        return tmp;
+        return tmp
       };
       for (let keys in oldObject) {
-        let insert = name2title(oldObject[keys]);
-        if (insert["name"] == "Query" || insert["name"] == "Mutation") {
-          newObject.unshift(insert);
+        let insert = name2title(oldObject[keys])
+        if (insert['name'] == 'Query' || insert['name'] == 'Mutation') {
+          newObject.unshift(insert)
           try {
-            for (let i = 0; i < insert["fields"].length; i++) {
-              this.dic[insert["fields"][i]["name"]] = insert["fields"][i];
+            for (let i = 0; i < insert['fields'].length; i++) {
+              this.dic[insert['fields'][i]['name']] = insert['fields'][i]
             }
           } finally {
           }
         } else if (
-          insert["kind"] !== "SCALAR" &&
-          insert["kind"] !== "ENUM" &&
-          insert["name"].indexOf("__") == -1
+          insert['kind'] !== 'SCALAR' &&
+          insert['kind'] !== 'ENUM' &&
+          insert['name'].indexOf('__') == -1
         ) {
-          newObject.push(insert);
-          this.dic[insert["name"]] = insert;
+          newObject.push(insert)
+          this.dic[insert['name']] = insert
         }
       }
-      let o1 = newObject[0];
-      let o2 = newObject[1];
-      newObject[0] = o2;
-      newObject[1] = o1;
-      this.treeData = newObject;
-      this.setDic(this.dic);
-      localStorage.setItem("dic", JSON.stringify(this.dic));
+      let o1 = newObject[0]
+      let o2 = newObject[1]
+      newObject[0] = o2
+      newObject[1] = o1
+      this.treeData = newObject
+      this.setDic(this.dic)
+      localStorage.setItem('dic', JSON.stringify(this.dic))
     },
 
-    showAPIInfo(info) {
-      //alert(JSON.stringify(info));
-      this.setApiInfo({ info: info });
-      this.setHistoryList(info);
-      this.changeDrawerShow({ show: true });
+    showAPIInfo (info) {
+      // alert(JSON.stringify(info));
+      this.setApiInfo({ info: info })
+      this.setHistoryList(info)
+      this.changeDrawerShow({ show: true })
     },
 
-    selectChange(e) {
-      alert(JSON.stringify(e));
+    selectChange (e) {
+      alert(JSON.stringify(e))
     },
 
-    findInDic() {
-      if (this.searchValue !== "") {
-        this.dropdownShow = false;
-        let val = this.searchValue;
-        let dic = this.dic;
-        let arr = [];
+    findInDic () {
+      if (this.searchValue !== '') {
+        this.dropdownShow = false
+        let val = this.searchValue
+        let dic = this.dic
+        let arr = []
         for (let key in dic) {
           if (key.toLowerCase().indexOf(val.toLowerCase()) > -1) {
-            arr.push(dic[key].name);
+            arr.push(dic[key].name)
           }
         }
         // alert(JSON.stringify(arr));
-        this.searchResult = arr;
+        this.searchResult = arr
         if (arr.length > 0) {
-          this.dropdownShow = true;
+          this.dropdownShow = true
         }
       }
     },
 
-    selectSearchItem(e) {
+    selectSearchItem (e) {
       if (this.dic[e]) {
-        this.searchValue = "";
-        this.setApiInfo({ info: this.dic[e] });
-        this.setHistoryList(this.dic[e]);
-        this.changeDrawerShow({ show: true });
+        this.searchValue = '';
+        this.setApiInfo({ info: this.dic[e] })
+        this.setHistoryList(this.dic[e])
+        this.changeDrawerShow({ show: true })
       }
     }
   }
-};
+}
 </script>
 
 <style>
