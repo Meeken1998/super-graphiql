@@ -16,11 +16,13 @@
           </DropdownMenu>
         </Dropdown>-->
         <AutoComplete
+          @on-select="selectSearchItem"
           v-model="searchValue"
           :data="searchResult"
           @on-search="findInDic"
           placeholder="Enter something..."
           style="width: 100%;"
+          clearable
         ></AutoComplete>
         <Tree :data="treeData" @on-select-change="selectChange"></Tree>
       </i-col>
@@ -465,7 +467,7 @@ export default {
         let dic = this.dic;
         let arr = [];
         for (let key in dic) {
-          if (key.indexOf(val) > -1) {
+          if (key.toLowerCase().indexOf(val.toLowerCase()) > -1) {
             arr.push(dic[key].name);
           }
         }
@@ -474,6 +476,15 @@ export default {
         if (arr.length > 0) {
           this.dropdownShow = true;
         }
+      }
+    },
+
+    selectSearchItem(e) {
+      if (this.dic[e]) {
+        this.searchValue = ""
+        this.setApiInfo({ info: this.dic[e] });
+        this.setHistoryList(this.dic[e]);
+        this.changeDrawerShow({ show: true });
       }
     }
   }
@@ -494,10 +505,6 @@ export default {
 
 .leftBar span:active {
   color: #57a3f3;
-}
-
-a {
-  color: #515a6e !important;
 }
 
 .ivu-select-dropdown {
