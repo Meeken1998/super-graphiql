@@ -1,4 +1,4 @@
-import vm from '../main'
+//import vm from '../main'
 import getClient from './getClient'
 
 import libs from '../libs/util'
@@ -11,17 +11,18 @@ const mutation = async (option, clientName) => {
     result = await client.mutate(option, clientName)
   } catch (e) {
     // if(e !== '用户不存在') {
-    //     vm.$Message.error(e);
+    //     console.error(e);
     // }
 
     let graphQLErrors = e.graphQLErrors
     if (graphQLErrors && graphQLErrors.length) {
+      throw graphQLErrors
       if (option.$graphqlError) {
         option.$graphqlError(graphQLErrors)
       } else {
         graphQLErrors.forEach(item => {
           if (item.message !== '用户不存在') {
-            vm.$Message.error({
+            console.error({
               content: item.message.message,
               duration: 3,
             })
@@ -30,7 +31,7 @@ const mutation = async (option, clientName) => {
       }
     }
     if (e.networkError) {
-      vm.$Message.error('请求失败，网络错误')
+      console.error('请求失败，网络错误')
     }
   }
   return libs.clone(result)

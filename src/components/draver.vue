@@ -17,29 +17,35 @@
           >docs.authing.cn/authing/sdk/open-graphql</a>
         </p>
         <Divider />
-        <p v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0" :style="pStyle">子项（fields）</p>
-        <div v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0" class="demo-drawer-profile">
+        <p
+          v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0"
+          :style="pStyle"
+        >子项（fields）</p>
+        <div
+          v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0"
+          class="demo-drawer-profile"
+        >
           <Row>
             <Col v-for="(item, index) in fields" :key="index" span="12" class="setfontsize">
               <Tooltip
                 placement="right"
-                :content="getTootips((item.type.name
+                :content="getTootips((apiInfo.name == 'Schemas' ? item.name : (item.type.name
                 ? item.type.name
-                : item.type.kind).replace('NON_NULL', '必填'))"
+                : item.type.kind)).replace('NON_NULL', '必填'))"
               >
                 <Tag
-                  :color="getTagColor(item.type.name
-              ? item.type.name
-              : item.type.kind)"
+                  :color="getTagColor(apiInfo.name == 'Schemas' ? item.name : (item.type.name
+                ? item.type.name
+                : item.type.kind))"
                 >
                   <span
-                    @click="findInDic((item.type.name
+                    @click="findInDic(apiInfo.name == 'Schemas' ? item.name : (item.type.name
                 ? item.type.name
                 : item.type.kind))"
                   >
-                    {{ (item.type.name
+                    {{ (apiInfo.name == 'Schemas' ? item.name : (item.type.name
                     ? item.type.name
-                    : item.type.kind).replace('NON_NULL', '必填') }}
+                    : item.type.kind)).replace('NON_NULL', '必填') }}
                   </span>
                 </Tag>
               </Tooltip>
@@ -47,7 +53,10 @@
             </Col>
           </Row>
         </div>
-        <div v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0" style="margin-top: 33px;width: 100%; height: 1px;"></div>
+        <div
+          v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0"
+          style="margin-top: 33px;width: 100%; height: 1px;"
+        ></div>
         <p v-if="apiInfo.args && args.length > 0" :style="pStyle">参数（args）</p>
         <div v-if="apiInfo.args && args.length > 0" class="demo-drawer-profile">
           <Row>
@@ -87,7 +96,11 @@
           <Icon type="md-arrow-round-back" />
           <span class="txt">上一条：{{ nowHistory - 1 >= 0 ? historyList[nowHistory - 1].name : '无' }}</span>
         </div>
-        <div v-if="historyList.length > 0 && (historyList.length - 1) > nowHistory" class="bottomItem" @click="nextPage">
+        <div
+          v-if="historyList.length > 0 && (historyList.length - 1) > nowHistory"
+          class="bottomItem"
+          @click="nextPage"
+        >
           <span class="txt">下一条：{{ historyList[nowHistory + 1].name }}</span>
           <Icon type="md-arrow-round-forward" />
         </div>
@@ -147,7 +160,7 @@ export default {
       this.modalShow = false;
       this.args = [];
       this.fields = [];
-      this.clearHistoryList()
+      this.clearHistoryList();
     },
     dealWithApiInfo() {
       let api = this.apiInfo;
@@ -189,7 +202,7 @@ export default {
     findInDic(key) {
       if (this.dic[key]) {
         this.setApiInfo({ info: this.dic[key] });
-        this.addToHistoryList(this.dic[key])
+        this.addToHistoryList(this.dic[key]);
       }
     },
     getTootips(item) {
@@ -256,10 +269,10 @@ export default {
     },
 
     nextPage() {
-      this.nextHistory()
+      this.nextHistory();
     },
     lastPage() {
-      this.lastHistory()
+      this.lastHistory();
     }
   }
 };
