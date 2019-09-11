@@ -28,16 +28,19 @@
           v-model="searchValue"
           :data="searchResult"
           @on-search="findInDic"
-          placeholder="Enter something..."
+          placeholder="查询方法和 Schema，生成查询语句"
           style="width: 100%;"
           clearable
         ></AutoComplete>
-        <Tree :data="treeData"></Tree>
+        <Tree :data="treeData" empty-text="文档加载中..."></Tree>
       </i-col>
       <i-col :xs="12" :sm="12" :md="18" :lg="18">
         <Row align="top" justify="start">
           <i-col span="12">
-            <div class="fullTitle">Query / Mutation</div>
+            <div class="fullTitle">
+              <span>Query / Mutation</span>
+              <Icon type="ios-trash" style="cursor: pointer"  size="16" @click="emptyCode" />
+            </div>
             <MonacoEditor
               class="editor"
               theme="vs"
@@ -46,7 +49,10 @@
               language="graphql"
               :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
             />
-            <div class="fullTitle">Variables</div>
+            <div class="fullTitle">
+              <span>Variables</span>
+              <Icon type="ios-trash" style="cursor: pointer"  size="16" @click="emptyVariables" />
+            </div>
             <MonacoEditor
               class="editor"
               theme="vs"
@@ -58,7 +64,10 @@
             <!-- :style="fullHeight > 0 ? 'height:' + (fullHeight - 54) + 'px;' : ''" -->
           </i-col>
           <i-col span="12">
-            <div class="fullTitle">Result</div>
+            <div class="fullTitle">
+              <span>Result</span>
+              <Icon type="ios-trash" style="cursor: pointer"  size="16" @click="emptyResult" />
+            </div>
             <MonacoEditor
               class="editor"
               theme="vs"
@@ -77,6 +86,7 @@
           <Select v-model="settings.url">
             <Option v-for="(item, index) in urlList" :key="index" :value="item">{{ item }}</Option>
           </Select>
+          <p>GraphQL 源通常是部署在线上的 GraphQL 服务地址</p>
         </FormItem>
       </Form>
     </Modal>
@@ -101,7 +111,7 @@ export default {
       },
       gqlUrl: "https://users.authing.cn/graphql",
       urlList: ["https://users.authing.cn/graphql"],
-      code: "mutation",
+      code: "",
       variables: "",
       result: "",
       dropdownShow: false,
@@ -637,7 +647,16 @@ export default {
       if (name == 2) {
         this.openSettings();
       } else if ((name = 3)) {
-        await this.startRun();
+        try {
+          let json = JSON.stringify(this.variables);
+          if (json) {
+            await this.startRun();
+          }
+        } catch (err) {
+          this.$Message.info(
+            "请输入正确的 variables 字段，它可以是数组或者对象"
+          );
+        }
       }
     },
 
@@ -656,31 +675,45 @@ export default {
 
       try {
         if (this.code.toLowerCase().indexOf("mutation") > -1) {
-          alert(this.code);
+          //alert(this.code);
           res = await graphqlMutation({
             mutation: gql`
               ${this.code}
             `,
-            //variables: JSON.parse(this.variables.length > 0 ? this.variables : '{}')
-            variables: {}
+            variables: JSON.parse(
+              this.variables.length > 0 ? this.variables : "{}"
+            )
+            //variables: {}
           });
         } else {
           res = await graphqlQuery({
             query: gql`
               ${this.code}
             `,
-            //variables: JSON.parse(this.variables.length > 0 ? this.variables : '{}')
-            variables: {
-              token:
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
-            }
+            variables: JSON.parse(
+              this.variables.length > 0 ? this.variables : "{}"
+            )
+            // variables: {
+            //   token:
+            //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
+            // }
           });
         }
-        this.result = JSON.stringify(res);
+        this.result = JSON.stringify(res, null, 4);
       } catch (err) {
         console.log(err);
-        this.result = JSON.stringify(err);
+        this.result = JSON.stringify(err, null, 4);
       }
+    },
+
+    emptyResult() {
+      this.result = ''
+    },
+    emptyVariables() {
+      this.variables = ''
+    },
+    emptyCode() {
+      this.code = ""
     }
   }
 };
@@ -752,7 +785,7 @@ export default {
   height: 30px;
   display: flex;
   flex-direction: row;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   font-size: 14px;
   font-weight: bold;

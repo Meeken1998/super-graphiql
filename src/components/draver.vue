@@ -2,12 +2,22 @@
   <div>
     <Drawer :closable="false" width="640" v-model="modalShow" @on-close="hideDrawer">
       <div class="topBox">
-        <p class="firstTitle" :style="pStyle">
-          <Tag color="primary">
-            <span style="font-size: 14px;font-weight: bold;">{{ apiInfo.type_ || 'Mutation' }}</span>
-          </Tag>
-          {{ apiInfo.name }}
-        </p>
+        <div class="firstTitle" :style="pStyle">
+          <span>
+            <Tag color="primary">
+              <span style="font-size: 14px;font-weight: bold;">{{ apiInfo.type_ || 'Type' }}</span>
+            </Tag>
+            {{ apiInfo.name }}
+          </span>
+          <span
+            class="a"
+            v-if="(apiInfo.type_ == 'Query' || apiInfo.type_ == 'Mutation') && (apiInfo.name !== 'Query' && apiInfo.name !== 'Mutation')"
+            @mousedown="makeGQLCode"
+            href="javascript: void(0)"
+          >
+            <Icon type="md-code-working" size="16" style="margin-right: 4px;" />生成查询语句
+          </span>
+        </div>
         <p>
           {{ apiInfo.description && apiInfo.description.length > 0 ? apiInfo.description : '暂无描述，详情请见文档：' }}
           <a
@@ -87,6 +97,31 @@
                 </Tag>
               </Tooltip>
               <span class="text">{{ item.name }}</span>
+            </Col>
+          </Row>
+        </div>
+        <Divider v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]" />
+        <p
+          v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]"
+          :style="pStyle"
+        >返回类型（Schema）</p>
+        <div
+          v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]"
+          class="demo-drawer-profile"
+        >
+          <Row>
+            <Col span="12" class="setfontsize">
+              <Tooltip
+                placement="right"
+                :content="getTootips(apiInfo.type.name.replace('NON_NULL', '必填'))"
+              >
+                <Tag :color="getTagColor(apiInfo.type.name)">
+                  <span
+                    @click="findInDic(apiInfo.type.name)"
+                  >{{ apiInfo.type.name.replace('NON_NULL', '必填') }}</span>
+                </Tag>
+              </Tooltip>
+              <span class="text">{{ apiInfo.type.name }}</span>
             </Col>
           </Row>
         </div>
@@ -273,6 +308,142 @@ export default {
     },
     lastPage() {
       this.lastHistory();
+    },
+    makeGQLCode() {
+      let str = "";
+      const that = this;
+      function getArgs(list) {
+        let tmp = list.args || [];
+        let arr = [];
+        for (let i = 0; i < tmp.length; i++) {
+          try {
+            if (tmp[i] && tmp[i]["type"]) {
+              let tp = tmp[i]["type"]["ofType"]
+                ? tmp[i]["type"]["ofType"]["name"]
+                : tmp[i]["type"]["kind"];
+              if (tmp[i]["type"]["kind"] == "NON_NULL") {
+                arr.push("$" + tmp[i]["name"] + ": " + tp + "!");
+              } else {
+                arr.push("$" + tmp[i]["name"] + ": " + tp);
+              }
+            }
+          } catch (err) {
+            alert(err);
+          }
+        }
+        return arr.join(", ");
+      }
+
+      function getSecondArgs(list) {
+        let tmp = list.args || [];
+        let arr = [];
+        for (let i = 0; i < tmp.length; i++) {
+          arr.push(tmp[i]["name"] + ": $" + tmp[i]["name"]);
+        }
+        return arr.join(", ");
+      }
+
+      function giveMeSpace(number) {
+        let space = "";
+        while (space.length < number) {
+          space = space + "  ";
+        }
+        return space;
+      }
+
+      function renderFields(info, level) {
+        let lev = level; //把层级给存起来
+        let fields = [];
+        let tmpstr = "";
+        try {
+          if (
+            typeof info.fields == "object" &&
+            info.fields.length &&
+            info.fields.length > 0
+          ) {
+            fields = info.fields;
+          } else if (
+            typeof info.inputFields == "object" &&
+            info.inputFields.length &&
+            info.inputFields.length > 0
+          ) {
+            fields = info.inputFields;
+          }
+        } finally {
+          if (fields.length > 0) {
+            for (let i = 0; i < fields.length; i++) {
+              if (
+                fields[i]["type"] &&
+                fields[i]["type"]["name"] &&
+                that.dic[fields[i]["type"]["name"]]
+              ) {
+                tmpstr =
+                  tmpstr +
+                  giveMeSpace(lev) +
+                  fields[i]["type"]["name"] +
+                  " {\n" +
+                  renderFields(that.dic[fields[i]["type"]["name"]], lev + 1) +
+                  giveMeSpace(lev) +
+                  "}\n";
+              } else {
+                tmpstr = tmpstr + giveMeSpace(lev) + fields[i]["name"] + "\n";
+              }
+            }
+          } else {
+            //可能是直接返回一个 schema
+            if (
+              info["type"] &&
+              info["type"]["name"] &&
+              that.dic[info["type"]["name"]]
+            ) {
+              tmpstr =
+                tmpstr +
+                giveMeSpace(lev) +
+                info["type"]["name"] +
+                " {\n" +
+                renderFields(that.dic[info["type"]["name"]], lev + 1) +
+                "\n" +
+                giveMeSpace(lev) +
+                "}\n";
+            }
+          }
+        }
+        return tmpstr;
+      }
+
+      str =
+        str +
+        this.apiInfo.type_.toLowerCase() +
+        " " +
+        this.apiInfo.name +
+        "(" +
+        getArgs(this.apiInfo) +
+        ") {\n  ";
+      str =
+        str +
+        this.apiInfo.name +
+        "(" +
+        getSecondArgs(this.apiInfo) +
+        ") { \n  " +
+        renderFields(this.apiInfo, 2) +
+        "\n  }\n}";
+      function copyText(text, callback) {
+        // 网上找的，为了不多加库真的很拼
+        var tag = document.createElement("textarea");
+        tag.setAttribute("id", "cp_hgz_input");
+        tag.setAttribute("warp", "hard");
+        tag.value = text;
+        document.getElementsByTagName("body")[0].appendChild(tag);
+        document.getElementById("cp_hgz_input").select();
+        document.execCommand("copy");
+        document.getElementById("cp_hgz_input").remove();
+        if (callback) {
+          callback(text);
+        }
+      }
+      copyText(str);
+      alert(str);
+      this.$Message.success("复制成功");
     }
   }
 };
@@ -284,7 +455,18 @@ export default {
 }
 
 .firstTitle {
+  width: 100%;
+  display: flex !important;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   font-size: 18px;
+}
+
+.firstTitle > span.a {
+  font-size: 14px;
+  color: #515151;
+  cursor: pointer;
 }
 
 .setfontsize {
