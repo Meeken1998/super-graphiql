@@ -317,10 +317,11 @@ export default {
         let arr = [];
         for (let i = 0; i < tmp.length; i++) {
           try {
+            //alert(JSON.stringify(tmp[i]))
             if (tmp[i] && tmp[i]["type"]) {
               let tp = tmp[i]["type"]["ofType"]
                 ? tmp[i]["type"]["ofType"]["name"]
-                : tmp[i]["type"]["kind"];
+                : tmp[i]["type"]["name"];
               if (tmp[i]["type"]["kind"] == "NON_NULL") {
                 arr.push("$" + tmp[i]["name"] + ": " + tp + "!");
               } else {
@@ -328,7 +329,7 @@ export default {
               }
             }
           } catch (err) {
-            alert(err);
+            //alert(err);
           }
         }
         return arr.join(", ");
@@ -442,7 +443,7 @@ export default {
         }
       }
       copyText(str);
-      alert(str);
+      //alert(str);
       this.$Message.success("复制成功");
     }
   }
