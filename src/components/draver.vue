@@ -42,11 +42,11 @@
         </p>
         <Divider />
         <p
-          v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0"
+          v-if="(apiInfo.fields || apiInfo.inputFields) && fields.length > 0"
           :style="pStyle"
         >子项（fields）</p>
         <div
-          v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0"
+          v-if="(apiInfo.fields || apiInfo.inputFields) && fields.length > 0"
           class="demo-drawer-profile"
         >
           <Row>
@@ -232,6 +232,7 @@ export default {
             console.log("ok");
           }
         }
+        //alert(JSON.stringify(this.fields))
       }
     },
     findInDic(key) {
@@ -381,7 +382,7 @@ export default {
                 tmpstr =
                   tmpstr +
                   giveMeSpace(lev) +
-                  fields[i]["type"]["name"] +
+                  fields[i]["name"] +
                   " {\n" +
                   renderFields(that.dic[fields[i]["type"]["name"]], lev + 1) +
                   giveMeSpace(lev) +
@@ -399,13 +400,9 @@ export default {
             ) {
               tmpstr =
                 tmpstr +
-                giveMeSpace(lev) +
-                info["type"]["name"] +
-                " {\n" +
+                //info["name"] +
                 renderFields(that.dic[info["type"]["name"]], lev + 1) +
-                "\n" +
-                giveMeSpace(lev) +
-                "}\n";
+                "\n";
             }
           }
         }
