@@ -39,7 +39,7 @@
           <i-col span="12">
             <div class="fullTitle">
               <span>Query / Mutation</span>
-              <Icon type="ios-trash" style="cursor: pointer"  size="16" @click="emptyCode" />
+              <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyCode" />
             </div>
             <MonacoEditor
               class="editor"
@@ -51,7 +51,7 @@
             />
             <div class="fullTitle">
               <span>Variables</span>
-              <Icon type="ios-trash" style="cursor: pointer"  size="16" @click="emptyVariables" />
+              <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyVariables" />
             </div>
             <MonacoEditor
               class="editor"
@@ -66,7 +66,7 @@
           <i-col span="12">
             <div class="fullTitle">
               <span>Result</span>
-              <Icon type="ios-trash" style="cursor: pointer"  size="16" @click="emptyResult" />
+              <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyResult" />
             </div>
             <MonacoEditor
               class="editor"
@@ -86,7 +86,15 @@
           <Select v-model="settings.url">
             <Option v-for="(item, index) in urlList" :key="index" :value="item">{{ item }}</Option>
           </Select>
-          <p>GraphQL 源通常是部署在线上的 GraphQL 服务地址</p>
+          <p>通常选择 Authing 官方的 GraphQL 地址来调试 API</p>
+        </FormItem>
+        <FormItem label="配置请求头（header）">
+          <Input
+            v-model="headers"
+            type="textarea"
+            :autosize="{minRows: 2,maxRows: 20}"
+            :placeholder="`请以key:value的形式输入，多个请换行，如：\nauthorization:yourtoken\ntimeout:1`"
+          ></Input>
         </FormItem>
       </Form>
     </Modal>
@@ -109,6 +117,7 @@ export default {
       settings: {
         url: "https://users.authing.cn/graphql"
       },
+      headers: '',
       gqlUrl: "https://users.authing.cn/graphql",
       urlList: ["https://users.authing.cn/graphql"],
       code: "",
@@ -157,6 +166,7 @@ export default {
   },
   mounted() {
     this.getList();
+    this.getHeader();
     const that = this;
     window.onresize = () => {
       return (() => {
@@ -172,6 +182,18 @@ export default {
       "setDic",
       "setHistoryList"
     ]),
+    getHeader() {
+      let header = JSON.parse(localStorage.getItem("headers")) || ""
+      let tmp = ''
+      if(header !== '' && typeof header == 'object') {
+        for(let key in header) {
+          tmp = tmp + key + ':' + header[key] + '\n'
+        }
+        this.headers = tmp
+      } else {
+        this.headers = ''
+      }
+    },
     async getList() {
       localStorage.setItem(
         "token",
@@ -664,7 +686,21 @@ export default {
       this.settingShow = true;
     },
 
-    settingOK() {},
+    settingOK() {
+      let arr = this.headers.split("\n");
+      let obj = {};
+      if (arr.length > 0) {
+        for (let i = 0; i < arr.length; i++) {
+          if (typeof arr[i] == "string" && arr[i].indexOf(":") > -1) {
+            let sp = arr[i].split(":");
+            obj[sp[0]] = sp[1];
+          }
+        }
+      }
+      localStorage.setItem("headers", JSON.stringify(obj));
+      this.getHeader()
+      this.$Message.success("配置成功");
+    },
 
     settingCancel() {
       this.settingShow = false;
@@ -707,13 +743,13 @@ export default {
     },
 
     emptyResult() {
-      this.result = ''
+      this.result = "";
     },
     emptyVariables() {
-      this.variables = ''
+      this.variables = "";
     },
     emptyCode() {
-      this.code = ""
+      this.code = "";
     }
   }
 };

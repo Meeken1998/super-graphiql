@@ -1,6 +1,20 @@
 <template>
   <div>
     <Drawer :closable="false" width="640" v-model="modalShow" @on-close="hideDrawer">
+      <div class="bottomBox">
+        <div class="bottomItem" @click="lastPage">
+          <Icon type="md-arrow-round-back" />
+          <span class="txt">上一条：{{ nowHistory - 1 >= 0 ? historyList[nowHistory - 1].name : '无' }}</span>
+        </div>
+        <div
+          v-if="historyList.length > 0 && (historyList.length - 1) > nowHistory"
+          class="bottomItem"
+          @click="nextPage"
+        >
+          <span class="txt">下一条：{{ historyList[nowHistory + 1].name }}</span>
+          <Icon type="md-arrow-round-forward" />
+        </div>
+      </div>
       <div class="topBox">
         <div class="firstTitle" :style="pStyle">
           <span>
@@ -49,13 +63,13 @@
                 : item.type.kind))"
                 >
                   <span
-                    @click="findInDic(apiInfo.name == 'Schemas' ? item.name : (item.type.name
-                ? item.type.name
-                : item.type.kind))"
-                  >
-                    {{ (apiInfo.name == 'Schemas' ? item.name : (item.type.name
+                    @click="findInDic(apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                     ? item.type.name
-                    : item.type.kind)).replace('NON_NULL', '必填') }}
+                    : item.type.kind).replace('NON_NULL', '必填').replace('NON_NULL', '必填'))"
+                  >
+                    {{ (apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                    ? item.type.name
+                    : item.type.kind).replace('NON_NULL', '必填').replace('NON_NULL', '必填')) }}
                   </span>
                 </Tag>
               </Tooltip>
@@ -86,11 +100,11 @@
                 : item.type.kind))"
                 >
                   <span
-                    @click="findInDic((item.type.name
-                ? item.type.name
-                : item.type.kind))"
+                    @click="findInDic(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                    ? item.type.name
+                    : item.type.kind).replace('NON_NULL', '必填'))"
                   >
-                    {{ (item.type.name
+                    {{ item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                     ? item.type.name
                     : item.type.kind).replace('NON_NULL', '必填') }}
                   </span>
@@ -124,20 +138,6 @@
               <span class="text">{{ apiInfo.type.name }}</span>
             </Col>
           </Row>
-        </div>
-      </div>
-      <div class="bottomBox">
-        <div class="bottomItem" @click="lastPage">
-          <Icon type="md-arrow-round-back" />
-          <span class="txt">上一条：{{ nowHistory - 1 >= 0 ? historyList[nowHistory - 1].name : '无' }}</span>
-        </div>
-        <div
-          v-if="historyList.length > 0 && (historyList.length - 1) > nowHistory"
-          class="bottomItem"
-          @click="nextPage"
-        >
-          <span class="txt">下一条：{{ historyList[nowHistory + 1].name }}</span>
-          <Icon type="md-arrow-round-forward" />
         </div>
       </div>
     </Drawer>
@@ -258,9 +258,9 @@ export default {
           return "基本类型：浮点型 (Float) ";
           break;
 
-        case "list":
-          return "基本类型：数组 (Array / list) ";
-          break;
+        // case "list":
+        //   return "基本类型：数组 (Array / list) ";
+        //   break;
 
         case "必填":
           return "不可为空";
@@ -285,9 +285,9 @@ export default {
           return "success";
           break;
 
-        case "list":
-          return "success";
-          break;
+        // case "list":
+        //   return "success";
+        //   break;
 
         case "float":
           return "success";
