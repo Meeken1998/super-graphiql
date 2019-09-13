@@ -50,31 +50,45 @@
           class="demo-drawer-profile"
         >
           <Row>
+            <Col span="24" class="setfontsize apiname">
+              <span style="color: #515a6e;margin-right: 6px;">type</span>
+              {{ apiInfo.name }} {
+            </Col>
             <Col v-for="(item, index) in fields" :key="index" span="12" class="setfontsize">
+              <span class="text">
+                {{ item.name }}
+                <span style="color: #000;margin: 0 3px;">:</span>
+              </span>
+
               <Tooltip
                 placement="right"
                 :content="getTootips((apiInfo.name == 'Schemas' ? item.name : (item.type.name
                 ? item.type.name
                 : item.type.kind)).replace('NON_NULL', '必填'))"
               >
-                <Tag
+                <!-- <Tag
                   :color="getTagColor(apiInfo.name == 'Schemas' ? item.name : (item.type.name
                 ? item.type.name
                 : item.type.kind))"
-                >
-                  <span
-                    @click="findInDic(apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                >-->
+                <span
+                  :style="getTagStyle(apiInfo.name == 'Schemas' ? item.name : (item.type.name
+                ? item.type.name
+                : item.type.kind))"
+                  @click="findInDic(apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                     ? item.type.name
                     : item.type.kind).replace('NON_NULL', '必填').replace('NON_NULL', '必填'))"
-                  >
-                    {{ (apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
-                    ? item.type.name
-                    : item.type.kind).replace('NON_NULL', '必填').replace('NON_NULL', '必填')) }}
-                  </span>
-                </Tag>
+                >
+                  {{ (apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind).replace('NON_NULL', '必填')) }}{{(apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind)) == 'NON_NULL' ? '!' : ''}}
+                </span>
+                <!-- </Tag> -->
               </Tooltip>
-              <span class="text">{{ item.name }}</span>
             </Col>
+            <Col span="24" class="setfontsize apiname">}</Col>
           </Row>
         </div>
         <div
@@ -84,38 +98,56 @@
         <p v-if="apiInfo.args && args.length > 0" :style="pStyle">参数（args）</p>
         <div v-if="apiInfo.args && args.length > 0" class="demo-drawer-profile">
           <Row>
+            <Col span="24" class="setfontsize apiname">{{ apiInfo.name }} (</Col>
+
             <Col v-for="(item, index) in args" :key="index" span="12" class="setfontsize">
+              <span class="text">
+                {{ item.name }}
+                <span style="color: #000;margin: 0 3px;">:</span>
+              </span>
               <Tooltip
                 placement="right"
                 :content="getTootips((item.type.name
                 ? item.type.name
                 : item.type.kind).replace('NON_NULL', '必填'))"
               >
-                <Tag
+                <!-- <Tag
                   :color="getTagColor(item.type.name
               ? item.type.name
               : item.type.kind)"
                   @click="findInDic((item.type.name
                 ? item.type.name
                 : item.type.kind))"
-                >
-                  <span
-                    @click="findInDic(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                >-->
+                <span
+                  :style="getTagStyle(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind))"
+                  @click="findInDic(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                     ? item.type.name
                     : item.type.kind).replace('NON_NULL', '必填'))"
-                  >
-                    {{ item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
-                    ? item.type.name
-                    : item.type.kind).replace('NON_NULL', '必填') }}
-                  </span>
-                </Tag>
+                >
+                  {{ item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind).replace('NON_NULL', '必填') }}{{(item.type.name
+                  ? item.type.name
+                  : item.type.kind) == 'NON_NULL' ? '!' : ''}}
+                </span>
+                <!-- </Tag> -->
               </Tooltip>
-              <span class="text">{{ item.name }}</span>
+            </Col>
+
+            <Col span="24" class="setfontsize apiname">
+              )
+              <span v-if="apiInfo.type.name" @click="findInDic(apiInfo.type.name)">
+                :
+                <span :style="getTagStyle(apiInfo.type.name)">{{ apiInfo.type.name }}</span>
+              </span>
             </Col>
           </Row>
         </div>
-        <Divider v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]" />
-        <p
+        <!-- <Divider v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]" /> -->
+        <!-- <p
           v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]"
           :style="pStyle"
         >返回类型（Schema）</p>
@@ -138,7 +170,7 @@
               <span class="text">{{ apiInfo.type.name }}</span>
             </Col>
           </Row>
-        </div>
+        </div>-->
       </div>
     </Drawer>
   </div>
@@ -232,7 +264,6 @@ export default {
             console.log("ok");
           }
         }
-        //alert(JSON.stringify(this.fields))
       }
     },
     findInDic(key) {
@@ -270,6 +301,38 @@ export default {
         default:
           return "自定义类型：" + item;
       }
+    },
+
+    getTagStyle(item) {
+      switch (item.toLowerCase()) {
+        case "string":
+          return "color: #27ae60";
+          break;
+
+        case "boolean":
+          return "color: #27ae60";
+          break;
+
+        case "int":
+          return "color: #27ae60";
+          break;
+
+        // case "list":
+        //   return "success";
+        //   break;
+
+        case "float":
+          return "color: #27ae60";
+          break;
+
+        case "non_null":
+          return "color: #27ae60";
+          break;
+
+        default:
+          return "cursor: pointer;color: #fe7c6c";
+      }
+      //return 'success'
     },
 
     getTagColor(item) {
@@ -473,15 +536,15 @@ export default {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  margin-bottom: 6px;
-  cursor: pointer;
+  margin-bottom: 3px;
   width: 100%;
   overflow-x: hidden;
   overflow-y: hidden;
 }
 
 span.text {
-  margin-left: 8px;
+  margin-left: 11px;
+  color: #1a5390;
 }
 
 .ivu-tooltip-popper {
@@ -528,5 +591,10 @@ span.text {
 
 .bottomItem > span.txt {
   margin: 0 6px;
+}
+
+.apiname {
+  color: #203053;
+  font-weight: bold;
 }
 </style>

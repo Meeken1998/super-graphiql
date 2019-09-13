@@ -50,10 +50,36 @@
               :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
             />
             <div class="fullTitle">
-              <span>Variables</span>
-              <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyVariables" />
+              <div class="checkBox">
+                <span
+                  class="a"
+                  :style="check == 0 ? '' : 'color: #a6abb2;'"
+                  @click="changeCheck(0)"
+                >Variables</span>
+                <span style="margin: 0 6px;"></span>
+                <span
+                  class="a"
+                  :style="check == 1 ? '' : 'color: #a6abb2;'"
+                  @click="changeCheck(1)"
+                >Headers</span>
+              </div>
+              <Icon
+                v-if="check == 0"
+                type="ios-trash"
+                style="cursor: pointer"
+                size="16"
+                @click="emptyVariables"
+              />
+              <Icon
+                v-if="check == 1"
+                type="md-checkbox-outline"
+                style="cursor: pointer"
+                size="16"
+                @click="settingOK"
+              />
             </div>
             <MonacoEditor
+              v-if="check == 0"
               class="editor"
               theme="vs"
               :options="monacoOptions"
@@ -61,6 +87,13 @@
               language="json"
               :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
             />
+            <Input
+              v-model="headers"
+              type="textarea"
+              :style="fullHeight > 0 ? 'margin-top: 2px;max-height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
+              :placeholder="`请以key:value的形式输入，多个请换行，如：\nauthorization:yourtoken\ntimeout:1`"
+              :autosize="{minRows: 6}"
+            ></Input>
             <!-- :style="fullHeight > 0 ? 'height:' + (fullHeight - 54) + 'px;' : ''" -->
           </i-col>
           <i-col span="12">
@@ -113,11 +146,12 @@ export default {
   components: { draver, MonacoEditor },
   data() {
     return {
+      check: 0,
       settingShow: false,
       settings: {
         url: "https://users.authing.cn/graphql"
       },
-      headers: '',
+      headers: "",
       gqlUrl: "https://users.authing.cn/graphql",
       urlList: ["https://users.authing.cn/graphql"],
       code: "",
@@ -183,15 +217,15 @@ export default {
       "setHistoryList"
     ]),
     getHeader() {
-      let header = JSON.parse(localStorage.getItem("headers")) || ""
-      let tmp = ''
-      if(header !== '' && typeof header == 'object') {
-        for(let key in header) {
-          tmp = tmp + key + ':' + header[key] + '\n'
+      let header = JSON.parse(localStorage.getItem("headers")) || "";
+      let tmp = "";
+      if (header !== "" && typeof header == "object") {
+        for (let key in header) {
+          tmp = tmp + key + ":" + header[key] + "\n";
         }
-        this.headers = tmp
+        this.headers = tmp;
       } else {
-        this.headers = ''
+        this.headers = "";
       }
     },
     async getList() {
@@ -305,6 +339,10 @@ export default {
         that.res = res.data.__schema.types;
         this.startDeal();
       }
+    },
+
+    changeCheck(idd) {
+      this.check = idd;
     },
 
     startDeal() {
@@ -698,7 +736,7 @@ export default {
         }
       }
       localStorage.setItem("headers", JSON.stringify(obj));
-      this.getHeader()
+      this.getHeader();
       this.$Message.success("配置成功");
     },
 
@@ -815,6 +853,11 @@ export default {
   overflow-y: hidden;
 }
 
+.checkBox {
+  display: flex;
+  flex-direction: row;
+}
+
 .fullTitle {
   padding: 0 5px;
   width: 100%;
@@ -825,5 +868,9 @@ export default {
   align-items: center;
   font-size: 14px;
   font-weight: bold;
+}
+
+span.a {
+  cursor: pointer;
 }
 </style>
