@@ -12,6 +12,7 @@ const query = async (option, clientName, ret) => {
   } catch (e) {
     console.error(e)
     let graphQLErrors = e.graphQLErrors
+    throw graphQLErrors
     if (graphQLErrors && graphQLErrors.length) {
       if (ret) {
         throw graphQLErrors

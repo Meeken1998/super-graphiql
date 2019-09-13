@@ -1,13 +1,37 @@
 <template>
   <div>
     <Drawer :closable="false" width="640" v-model="modalShow" @on-close="hideDrawer">
+      <div class="bottomBox">
+        <div class="bottomItem" @click="lastPage">
+          <Icon type="md-arrow-round-back" />
+          <span class="txt">上一条：{{ nowHistory - 1 >= 0 ? historyList[nowHistory - 1].name : '无' }}</span>
+        </div>
+        <div
+          v-if="historyList.length > 0 && (historyList.length - 1) > nowHistory"
+          class="bottomItem"
+          @click="nextPage"
+        >
+          <span class="txt">下一条：{{ historyList[nowHistory + 1].name }}</span>
+          <Icon type="md-arrow-round-forward" />
+        </div>
+      </div>
       <div class="topBox">
-        <p class="firstTitle" :style="pStyle">
-          <Tag color="primary">
-            <span style="font-size: 14px;font-weight: bold;">{{ apiInfo.type_ || 'Mutation' }}</span>
-          </Tag>
-          {{ apiInfo.name }}
-        </p>
+        <div class="firstTitle" :style="pStyle">
+          <span>
+            <Tag color="primary">
+              <span style="font-size: 14px;font-weight: bold;">{{ apiInfo.type_ || 'Type' }}</span>
+            </Tag>
+            {{ apiInfo.name }}
+          </span>
+          <span
+            class="a"
+            v-if="(apiInfo.type_ == 'Query' || apiInfo.type_ == 'Mutation') && (apiInfo.name !== 'Query' && apiInfo.name !== 'Mutation')"
+            @mousedown="makeGQLCode"
+            href="javascript: void(0)"
+          >
+            <Icon type="md-code-working" size="16" style="margin-right: 4px;" />生成查询语句
+          </span>
+        </div>
         <p>
           {{ apiInfo.description && apiInfo.description.length > 0 ? apiInfo.description : '暂无描述，详情请见文档：' }}
           <a
@@ -17,80 +41,136 @@
           >docs.authing.cn/authing/sdk/open-graphql</a>
         </p>
         <Divider />
-        <p v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0" :style="pStyle">子项（fields）</p>
-        <div v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0" class="demo-drawer-profile">
+        <p
+          v-if="(apiInfo.fields || apiInfo.inputFields) && fields.length > 0"
+          :style="pStyle"
+        >子项（fields）</p>
+        <div
+          v-if="(apiInfo.fields || apiInfo.inputFields) && fields.length > 0"
+          class="demo-drawer-profile"
+        >
           <Row>
+            <Col span="24" class="setfontsize apiname">
+              <span style="color: #515a6e;margin-right: 6px;">type</span>
+              {{ apiInfo.name }} {
+            </Col>
             <Col v-for="(item, index) in fields" :key="index" span="12" class="setfontsize">
+              <span class="text">
+                {{ item.name }}
+                <span style="color: #000;margin: 0 3px;">:</span>
+              </span>
+
               <Tooltip
                 placement="right"
-                :content="getTootips((item.type.name
+                :content="getTootips((apiInfo.name == 'Schemas' ? item.name : (item.type.name
                 ? item.type.name
-                : item.type.kind).replace('NON_NULL', '必填'))"
+                : item.type.kind)).replace('NON_NULL', '必填'))"
               >
-                <Tag
-                  :color="getTagColor(item.type.name
-              ? item.type.name
-              : item.type.kind)"
-                >
-                  <span
-                    @click="findInDic((item.type.name
+                <!-- <Tag
+                  :color="getTagColor(apiInfo.name == 'Schemas' ? item.name : (item.type.name
                 ? item.type.name
                 : item.type.kind))"
-                  >
-                    {{ (item.type.name
+                >-->
+                <span
+                  :style="getTagStyle(apiInfo.name == 'Schemas' ? item.name : (item.type.name
+                ? item.type.name
+                : item.type.kind))"
+                  @click="findInDic(apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                     ? item.type.name
-                    : item.type.kind).replace('NON_NULL', '必填') }}
-                  </span>
-                </Tag>
+                    : item.type.kind).replace('NON_NULL', '必填').replace('NON_NULL', '必填'))"
+                >
+                  {{ (apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind).replace('NON_NULL', '必填')) }}{{(apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind)) == 'NON_NULL' ? '!' : ''}}
+                </span>
+                <!-- </Tag> -->
               </Tooltip>
-              <span class="text">{{ item.name }}</span>
             </Col>
+            <Col span="24" class="setfontsize apiname">}</Col>
           </Row>
         </div>
-        <div v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0" style="margin-top: 33px;width: 100%; height: 1px;"></div>
+        <div
+          v-if="(apiInfo.fields || apiInfo.inputFilds) && fields.length > 0"
+          style="margin-top: 33px;width: 100%; height: 1px;"
+        ></div>
         <p v-if="apiInfo.args && args.length > 0" :style="pStyle">参数（args）</p>
         <div v-if="apiInfo.args && args.length > 0" class="demo-drawer-profile">
           <Row>
+            <Col span="24" class="setfontsize apiname">{{ apiInfo.name }} (</Col>
+
             <Col v-for="(item, index) in args" :key="index" span="12" class="setfontsize">
+              <span class="text">
+                {{ item.name }}
+                <span style="color: #000;margin: 0 3px;">:</span>
+              </span>
               <Tooltip
                 placement="right"
                 :content="getTootips((item.type.name
                 ? item.type.name
                 : item.type.kind).replace('NON_NULL', '必填'))"
               >
-                <Tag
+                <!-- <Tag
                   :color="getTagColor(item.type.name
               ? item.type.name
               : item.type.kind)"
                   @click="findInDic((item.type.name
                 ? item.type.name
                 : item.type.kind))"
-                >
-                  <span
-                    @click="findInDic((item.type.name
-                ? item.type.name
-                : item.type.kind))"
-                  >
-                    {{ (item.type.name
+                >-->
+                <span
+                  :style="getTagStyle(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind))"
+                  @click="findInDic(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                     ? item.type.name
-                    : item.type.kind).replace('NON_NULL', '必填') }}
-                  </span>
-                </Tag>
+                    : item.type.kind).replace('NON_NULL', '必填'))"
+                >
+                  {{ item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind).replace('NON_NULL', '必填') }}{{(item.type.name
+                  ? item.type.name
+                  : item.type.kind) == 'NON_NULL' ? '!' : ''}}
+                </span>
+                <!-- </Tag> -->
               </Tooltip>
-              <span class="text">{{ item.name }}</span>
+            </Col>
+
+            <Col span="24" class="setfontsize apiname">
+              )
+              <span v-if="apiInfo.type.name" @click="findInDic(apiInfo.type.name)">
+                :
+                <span :style="getTagStyle(apiInfo.type.name)">{{ apiInfo.type.name }}</span>
+              </span>
             </Col>
           </Row>
         </div>
-      </div>
-      <div class="bottomBox">
-        <div class="bottomItem" @click="lastPage">
-          <Icon type="md-arrow-round-back" />
-          <span class="txt">上一条：{{ nowHistory - 1 >= 0 ? historyList[nowHistory - 1].name : '无' }}</span>
-        </div>
-        <div v-if="historyList.length > 0 && (historyList.length - 1) > nowHistory" class="bottomItem" @click="nextPage">
-          <span class="txt">下一条：{{ historyList[nowHistory + 1].name }}</span>
-          <Icon type="md-arrow-round-forward" />
-        </div>
+        <!-- <Divider v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]" /> -->
+        <!-- <p
+          v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]"
+          :style="pStyle"
+        >返回类型（Schema）</p>
+        <div
+          v-if="apiInfo.type && apiInfo.type.name && dic[apiInfo.type.name]"
+          class="demo-drawer-profile"
+        >
+          <Row>
+            <Col span="12" class="setfontsize">
+              <Tooltip
+                placement="right"
+                :content="getTootips(apiInfo.type.name.replace('NON_NULL', '必填'))"
+              >
+                <Tag :color="getTagColor(apiInfo.type.name)">
+                  <span
+                    @click="findInDic(apiInfo.type.name)"
+                  >{{ apiInfo.type.name.replace('NON_NULL', '必填') }}</span>
+                </Tag>
+              </Tooltip>
+              <span class="text">{{ apiInfo.type.name }}</span>
+            </Col>
+          </Row>
+        </div>-->
       </div>
     </Drawer>
   </div>
@@ -147,7 +227,7 @@ export default {
       this.modalShow = false;
       this.args = [];
       this.fields = [];
-      this.clearHistoryList()
+      this.clearHistoryList();
     },
     dealWithApiInfo() {
       let api = this.apiInfo;
@@ -189,7 +269,7 @@ export default {
     findInDic(key) {
       if (this.dic[key]) {
         this.setApiInfo({ info: this.dic[key] });
-        this.addToHistoryList(this.dic[key])
+        this.addToHistoryList(this.dic[key]);
       }
     },
     getTootips(item) {
@@ -210,9 +290,9 @@ export default {
           return "基本类型：浮点型 (Float) ";
           break;
 
-        case "list":
-          return "基本类型：数组 (Array / list) ";
-          break;
+        // case "list":
+        //   return "基本类型：数组 (Array / list) ";
+        //   break;
 
         case "必填":
           return "不可为空";
@@ -221,6 +301,38 @@ export default {
         default:
           return "自定义类型：" + item;
       }
+    },
+
+    getTagStyle(item) {
+      switch (item.toLowerCase()) {
+        case "string":
+          return "color: #27ae60";
+          break;
+
+        case "boolean":
+          return "color: #27ae60";
+          break;
+
+        case "int":
+          return "color: #27ae60";
+          break;
+
+        // case "list":
+        //   return "success";
+        //   break;
+
+        case "float":
+          return "color: #27ae60";
+          break;
+
+        case "non_null":
+          return "color: #27ae60";
+          break;
+
+        default:
+          return "cursor: pointer;color: #fe7c6c";
+      }
+      //return 'success'
     },
 
     getTagColor(item) {
@@ -237,9 +349,9 @@ export default {
           return "success";
           break;
 
-        case "list":
-          return "success";
-          break;
+        // case "list":
+        //   return "success";
+        //   break;
 
         case "float":
           return "success";
@@ -256,10 +368,143 @@ export default {
     },
 
     nextPage() {
-      this.nextHistory()
+      this.nextHistory();
     },
     lastPage() {
-      this.lastHistory()
+      this.lastHistory();
+    },
+    makeGQLCode() {
+      let str = "";
+      const that = this;
+      function getArgs(list) {
+        let tmp = list.args || [];
+        let arr = [];
+        for (let i = 0; i < tmp.length; i++) {
+          try {
+            //alert(JSON.stringify(tmp[i]))
+            if (tmp[i] && tmp[i]["type"]) {
+              let tp = tmp[i]["type"]["ofType"]
+                ? tmp[i]["type"]["ofType"]["name"]
+                : tmp[i]["type"]["name"];
+              if (tmp[i]["type"]["kind"] == "NON_NULL") {
+                arr.push("$" + tmp[i]["name"] + ": " + tp + "!");
+              } else {
+                arr.push("$" + tmp[i]["name"] + ": " + tp);
+              }
+            }
+          } catch (err) {
+            //alert(err);
+          }
+        }
+        return arr.join(", ");
+      }
+
+      function getSecondArgs(list) {
+        let tmp = list.args || [];
+        let arr = [];
+        for (let i = 0; i < tmp.length; i++) {
+          arr.push(tmp[i]["name"] + ": $" + tmp[i]["name"]);
+        }
+        return arr.join(", ");
+      }
+
+      function giveMeSpace(number) {
+        let space = "";
+        while (space.length < number) {
+          space = space + "  ";
+        }
+        return space;
+      }
+
+      function renderFields(info, level) {
+        let lev = level; //把层级给存起来
+        let fields = [];
+        let tmpstr = "";
+        try {
+          if (
+            typeof info.fields == "object" &&
+            info.fields.length &&
+            info.fields.length > 0
+          ) {
+            fields = info.fields;
+          } else if (
+            typeof info.inputFields == "object" &&
+            info.inputFields.length &&
+            info.inputFields.length > 0
+          ) {
+            fields = info.inputFields;
+          }
+        } finally {
+          if (fields.length > 0) {
+            for (let i = 0; i < fields.length; i++) {
+              if (
+                fields[i]["type"] &&
+                fields[i]["type"]["name"] &&
+                that.dic[fields[i]["type"]["name"]]
+              ) {
+                tmpstr =
+                  tmpstr +
+                  giveMeSpace(lev) +
+                  fields[i]["name"] +
+                  " {\n" +
+                  renderFields(that.dic[fields[i]["type"]["name"]], lev + 1) +
+                  giveMeSpace(lev) +
+                  "}\n";
+              } else {
+                tmpstr = tmpstr + giveMeSpace(lev) + fields[i]["name"] + "\n";
+              }
+            }
+          } else {
+            //可能是直接返回一个 schema
+            if (
+              info["type"] &&
+              info["type"]["name"] &&
+              that.dic[info["type"]["name"]]
+            ) {
+              tmpstr =
+                tmpstr +
+                //info["name"] +
+                renderFields(that.dic[info["type"]["name"]], lev + 1) +
+                "\n";
+            }
+          }
+        }
+        return tmpstr;
+      }
+
+      str =
+        str +
+        this.apiInfo.type_.toLowerCase() +
+        " " +
+        this.apiInfo.name +
+        "(" +
+        getArgs(this.apiInfo) +
+        ") {\n  ";
+      str =
+        str +
+        this.apiInfo.name +
+        "(" +
+        getSecondArgs(this.apiInfo) +
+        ") { \n  " +
+        renderFields(this.apiInfo, 2) +
+        "\n  }\n}";
+      function copyText(text, callback) {
+        // 网上找的，为了不多加库真的很拼
+        var tag = document.createElement("textarea");
+        tag.setAttribute("id", "cp_hgz_input");
+        tag.setAttribute("warp", "hard");
+        tag.value = text;
+        document.getElementsByTagName("body")[0].appendChild(tag);
+        document.getElementById("cp_hgz_input").select();
+        document.execCommand("copy");
+        document.getElementById("cp_hgz_input").remove();
+        if (callback) {
+          callback(text);
+        }
+      }
+      copyText(str);
+      //alert(str);
+      this.$Message.success("复制成功");
     }
   }
 };
@@ -271,7 +516,18 @@ export default {
 }
 
 .firstTitle {
+  width: 100%;
+  display: flex !important;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   font-size: 18px;
+}
+
+.firstTitle > span.a {
+  font-size: 14px;
+  color: #515151;
+  cursor: pointer;
 }
 
 .setfontsize {
@@ -280,15 +536,15 @@ export default {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  margin-bottom: 6px;
-  cursor: pointer;
+  margin-bottom: 3px;
   width: 100%;
   overflow-x: hidden;
   overflow-y: hidden;
 }
 
 span.text {
-  margin-left: 8px;
+  margin-left: 11px;
+  color: #1a5390;
 }
 
 .ivu-tooltip-popper {
@@ -335,5 +591,10 @@ span.text {
 
 .bottomItem > span.txt {
   margin: 0 6px;
+}
+
+.apiname {
+  color: #203053;
+  font-weight: bold;
 }
 </style>
