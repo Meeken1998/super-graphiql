@@ -119,7 +119,7 @@
           <Select v-model="settings.url">
             <Option v-for="(item, index) in urlList" :key="index" :value="item">{{ item }}</Option>
           </Select>
-          <p>通常选择 Authing 官方的 GraphQL 地址来调试 API</p>
+          <p>关于用户管理的 API 都在此 GraphQL 源内</p>
         </FormItem>
         <FormItem label="配置请求头（header）">
           <Input
