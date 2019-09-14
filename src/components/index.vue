@@ -6,7 +6,7 @@
         style="width: 100%;"
         mode="horizontal"
         theme="dark"
-        active-name="1"
+        :active-name="menu"
         @on-select="menuOnSelect"
       >
         <MenuItem name="1">
@@ -146,6 +146,7 @@ export default {
   components: { draver, MonacoEditor },
   data() {
     return {
+      menu: 1,
       check: 0,
       settingShow: false,
       settings: {
@@ -718,6 +719,7 @@ export default {
           );
         }
       }
+      this.menu = 1
     },
 
     openSettings() {

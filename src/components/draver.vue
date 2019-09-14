@@ -420,6 +420,9 @@ export default {
         let lev = level; //把层级给存起来
         let fields = [];
         let tmpstr = "";
+        if(!info) {
+          return ''
+        }
         try {
           if (
             typeof info.fields == "object" &&
@@ -438,16 +441,27 @@ export default {
           if (fields.length > 0) {
             for (let i = 0; i < fields.length; i++) {
               if (
-                fields[i]["type"] &&
-                fields[i]["type"]["name"] &&
-                that.dic[fields[i]["type"]["name"]]
+                (fields[i]["type"] &&
+                  fields[i]["type"]["name"] &&
+                  that.dic[fields[i]["type"]["name"]]) ||
+                (fields[i]["type"] && fields[i]["type"]["ofType"])
               ) {
+                let typeName = fields[i]["type"]["name"];
+                if (
+                  fields[i]["type"] &&
+                  fields[i]["type"]["ofType"] &&
+                  fields[i]["type"]["ofType"]["name"] &&
+                  that.dic[fields[i]["type"]["ofType"]["name"]]
+                ) {
+                  //alert(fields[i]['type']['ofType']['name'])
+                  typeName = fields[i]["type"]["ofType"]["name"];
+                }
                 tmpstr =
                   tmpstr +
                   giveMeSpace(lev) +
                   fields[i]["name"] +
                   " {\n" +
-                  renderFields(that.dic[fields[i]["type"]["name"]], lev + 1) +
+                  renderFields(that.dic[typeName], lev + 1) +
                   giveMeSpace(lev) +
                   "}\n";
               } else {
@@ -457,14 +471,23 @@ export default {
           } else {
             //可能是直接返回一个 schema
             if (
-              info["type"] &&
-              info["type"]["name"] &&
-              that.dic[info["type"]["name"]]
+              (info["type"] &&
+                info["type"]["name"] &&
+                that.dic[info["type"]["name"]]) ||
+              (info["type"] &&
+                info["type"]["ofType"] &&
+                that.dic[info["type"]["ofType"]["name"]])
             ) {
+              let typeName = "";
+              if (info["type"] && info["type"]["ofType"]) {
+                typeName = info["type"]["ofType"]["name"];
+              } else {
+                typeName = info["type"]["name"];
+              }
               tmpstr =
                 tmpstr +
                 //info["name"] +
-                renderFields(that.dic[info["type"]["name"]], lev + 1) +
+                renderFields(that.dic[typeName], lev + 1) +
                 "\n";
             }
           }
@@ -479,13 +502,13 @@ export default {
         this.apiInfo.name +
         "(" +
         getArgs(this.apiInfo) +
-        ") {\n  ";
+        ") {\n";
       str =
         str +
         this.apiInfo.name +
         "(" +
         getSecondArgs(this.apiInfo) +
-        ") { \n  " +
+        ") { \n" +
         renderFields(this.apiInfo, 2) +
         "\n  }\n}";
       function copyText(text, callback) {
