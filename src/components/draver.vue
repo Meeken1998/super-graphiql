@@ -375,35 +375,80 @@ export default {
     },
     makeGQLCode() {
       let str = "";
-      const that = this;
-      function getArgs(list) {
-        let tmp = list.args || [];
+      let that = this;
+      function getArgs(list, showType) {
+        if(!list) {
+          return false
+        }
+        let tmp = list.args || list.inputFields || list.fields || [];
         let arr = [];
         for (let i = 0; i < tmp.length; i++) {
           try {
+            let tp = tmp[i]["type"]["ofType"]
+              ? tmp[i]["type"]["ofType"]["name"]
+              : tmp[i]["type"]["name"];
             //alert(JSON.stringify(tmp[i]))
+            alert(tp)
             if (tmp[i] && tmp[i]["type"]) {
-              let tp = tmp[i]["type"]["ofType"]
-                ? tmp[i]["type"]["ofType"]["name"]
-                : tmp[i]["type"]["name"];
-              if (tmp[i]["type"]["kind"] == "NON_NULL") {
-                arr.push("$" + tmp[i]["name"] + ": " + tp + "!");
+              if (getArgs(that.dic[tp])) {
+                arr.push(getArgs(that.dic[tp]));
               } else {
-                arr.push("$" + tmp[i]["name"] + ": " + tp);
+                if (tmp[i]["type"]["kind"] == "NON_NULL") {
+                  arr.push("$" + tmp[i]["name"] + ": " + tp + "!");
+                } else {
+                  arr.push("$" + tmp[i]["name"] + ": " + tp);
+                }
               }
             }
           } catch (err) {
-            //alert(err);
+            alert(err);
           }
         }
         return arr.join(", ");
       }
 
-      function getSecondArgs(list) {
-        let tmp = list.args || [];
+      function getFirstArgsInObject(list) {
+        let tmp = list.args || list.inputFields || list.fields || [];
         let arr = [];
         for (let i = 0; i < tmp.length; i++) {
+          let tp = tmp[i]["type"]["ofType"]
+            ? tmp[i]["type"]["ofType"]["name"]
+            : tmp[i]["type"]["name"];
+          // if (
+          //   tp !== "String" &&
+          //   tp !== "Boolean" &&
+          //   tp !== "Int" &&
+          //   tp !== "Float" &&
+          //   that.dic[tp]
+          // ) {
+          //   tp = "{" + getArgs(that.dic[tp]) + "}";
+          //   arr.push(tmp[i]["name"] + ": " + tp);
+          // } else {
           arr.push(tmp[i]["name"] + ": $" + tmp[i]["name"]);
+          //}
+        }
+        return arr;
+      }
+
+      function getSecondArgs(list, showType) {
+        let tmp = list.args || list.inputFields || list.fields || [];
+        let arr = [];
+        for (let i = 0; i < tmp.length; i++) {
+          let tp = tmp[i]["type"]["ofType"]
+            ? tmp[i]["type"]["ofType"]["name"]
+            : tmp[i]["type"]["name"];
+          if (
+            tp !== "String" &&
+            tp !== "Boolean" &&
+            tp !== "Int" &&
+            tp !== "Float" &&
+            that.dic[tp]
+          ) {
+            tp = "{" + getArgs(that.dic[tp]) + "}";
+            arr.push(tmp[i]["name"] + ": " + tp);
+          } else {
+            arr.push(tmp[i]["name"] + ": $" + tmp[i]["name"]);
+          }
         }
         return arr.join(", ");
       }
@@ -420,8 +465,8 @@ export default {
         let lev = level; //把层级给存起来
         let fields = [];
         let tmpstr = "";
-        if(!info) {
-          return ''
+        if (!info) {
+          return "";
         }
         try {
           if (
@@ -444,7 +489,9 @@ export default {
                 (fields[i]["type"] &&
                   fields[i]["type"]["name"] &&
                   that.dic[fields[i]["type"]["name"]]) ||
-                (fields[i]["type"] && fields[i]["type"]["ofType"])
+                (fields[i]["type"] &&
+                  fields[i]["type"]["ofType"] &&
+                  that.dic[fields[i]["type"]["ofType"]["name"]])
               ) {
                 let typeName = fields[i]["type"]["name"];
                 if (
@@ -456,14 +503,20 @@ export default {
                   //alert(fields[i]['type']['ofType']['name'])
                   typeName = fields[i]["type"]["ofType"]["name"];
                 }
-                tmpstr =
-                  tmpstr +
-                  giveMeSpace(lev) +
-                  fields[i]["name"] +
-                  " {\n" +
-                  renderFields(that.dic[typeName], lev + 1) +
-                  giveMeSpace(lev) +
-                  "}\n";
+                let res = renderFields(that.dic[typeName], lev + 1);
+                //alert(JSON.stringify(res))
+                if (res !== "") {
+                  res =
+                    giveMeSpace(lev) +
+                    fields[i]["name"] +
+                    " {\n" +
+                    res +
+                    giveMeSpace(lev) +
+                    "}\n";
+                } else {
+                  res = giveMeSpace(lev) + fields[i]["name"] + "\n";
+                }
+                tmpstr = tmpstr + res;
               } else {
                 tmpstr = tmpstr + giveMeSpace(lev) + fields[i]["name"] + "\n";
               }
@@ -479,7 +532,11 @@ export default {
                 that.dic[info["type"]["ofType"]["name"]])
             ) {
               let typeName = "";
-              if (info["type"] && info["type"]["ofType"]) {
+              if (
+                info["type"] &&
+                info["type"]["ofType"] &&
+                info["type"]["ofType"]["name"]
+              ) {
                 typeName = info["type"]["ofType"]["name"];
               } else {
                 typeName = info["type"]["name"];
