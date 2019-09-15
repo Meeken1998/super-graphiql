@@ -733,12 +733,11 @@ export default {
     },
 
     showAPIInfo(info) {
-      // alert(JSON.stringify(info));
-      if (info.type !== "DOCS") {
-        this.setApiInfo({ info: info });
-        this.setHistoryList(info);
-        this.changeDrawerShow({ show: true });
-      }
+      //if (info.type !== "DOCS") {
+      this.setApiInfo({ info: info });
+      this.setHistoryList(info);
+      this.changeDrawerShow({ show: true });
+      //}
     },
 
     // selectChange(e) {

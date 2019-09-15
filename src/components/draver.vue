@@ -33,7 +33,7 @@
           </span>
         </div>
         <p>
-          {{ ((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || apiDocs[apiInfo['name']]['brief'] || '暂无描述，详情请见文档：' }}
+          {{ ((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || (apiDocs[apiInfo['name']] && apiDocs[apiInfo['name']]['brief']) || '暂无描述，详情请见文档：' }}
           <a
             v-if="!(apiInfo.description && apiInfo.description.length > 0)"
             href="https://docs.authing.cn/authing/sdk/open-graphql"
@@ -124,8 +124,8 @@
                   ? item.type.name
                   : item.type.kind))"
                   @click="findInDic(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
-                    ? item.type.name
-                    : item.type.kind).replace('NON_NULL', '必填'))"
+                  ? item.type.name
+                  : item.type.kind))"
                 >
                   {{ item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                   ? item.type.name
