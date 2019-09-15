@@ -33,7 +33,7 @@
           </span>
         </div>
         <p>
-          {{ apiInfo.description && apiInfo.description.length > 0 ? apiInfo.description : '暂无描述，详情请见文档：' }}
+          {{ ((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || apiDocs[apiInfo['name']]['brief'] || '暂无描述，详情请见文档：' }}
           <a
             v-if="!(apiInfo.description && apiInfo.description.length > 0)"
             href="https://docs.authing.cn/authing/sdk/open-graphql"
@@ -200,7 +200,8 @@ export default {
       "apiInfo",
       "dic",
       "nowHistory",
-      "historyList"
+      "historyList",
+      "apiDocs"
     ])
   },
   watch: {
@@ -388,7 +389,7 @@ export default {
               ? tmp[i]["type"]["ofType"]["name"]
               : tmp[i]["type"]["name"];
             //alert(JSON.stringify(tmp[i]))
-            alert(tp)
+            //alert(tp)
             if (tmp[i] && tmp[i]["type"]) {
               if (getArgs(that.dic[tp])) {
                 arr.push(getArgs(that.dic[tp]));
