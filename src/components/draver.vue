@@ -33,12 +33,12 @@
           </span>
         </div>
         <p>
-          {{ ((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || (apiDocs[apiInfo['name']] && apiDocs[apiInfo['name']]['brief']) || '暂无描述，详情请见文档：' }}
+          {{ clearUrlInString(((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || (apiDocs[apiInfo['name']] && apiDocs[apiInfo['name']]['brief']) || '暂无描述，详情请见文档：') }}
           <a
             v-if="!(apiInfo.description && apiInfo.description.length > 0)"
-            href="https://docs.authing.cn/authing/sdk/open-graphql"
+            :href="getUrlInString(((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || (apiDocs[apiInfo['name']] && apiDocs[apiInfo['name']]['brief']) || '暂无描述，详情请见文档：') || 'https://docs.authing.cn/authing/sdk/open-graphql'"
             target="_blank"
-          >docs.authing.cn/authing/sdk/open-graphql</a>
+          >{{ getUrlInString(((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || (apiDocs[apiInfo['name']] && apiDocs[apiInfo['name']]['brief']) || '暂无描述，详情请见文档：') || 'https://docs.authing.cn/authing/sdk/open-graphql' }}</a>
         </p>
         <Divider />
         <p
@@ -567,13 +567,13 @@ export default {
         str +
         this.apiInfo.type_.toLowerCase() +
         " " +
-        this.apiInfo.name +
+        (this.apiInfo.name == "User" ? "user" : this.apiInfo.name) +
         "(" +
         getArgs(this.apiInfo) +
         ") {\n";
       str =
         str +
-        this.apiInfo.name +
+        (this.apiInfo.name == "User" ? "user" : this.apiInfo.name) +
         "(" +
         getSecondArgs(this.apiInfo) +
         ") { \n" +
@@ -596,6 +596,20 @@ export default {
       copyText(str);
       //alert(str);
       this.$Message.success("复制成功");
+    },
+
+    clearUrlInString(str) {
+      let reg = /(http:\/\/|https:\/\/)((\w|=|\?|\.|\/|&|-|#)+)/g;
+      return str.replace(reg, "") || "";
+    },
+
+    getUrlInString(str) {
+      let reg = /(http:\/\/|https:\/\/)((\w|=|\?|\.|\/|&|-|#)+)/g;
+      if(str && reg.exec(str)) {
+        return reg.exec(str)[0]
+      } else {
+        return null
+      }
     }
   }
 };
