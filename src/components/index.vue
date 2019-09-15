@@ -177,7 +177,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("apollo", ["drawerShow"])
+    ...mapGetters("apollo", ["drawerShow", "apiDocs"])
   },
   watch: {
     searchValue() {
@@ -663,13 +663,82 @@ export default {
       this.setDic(this.dic);
       localStorage.setItem("dic", JSON.stringify(this.dic));
       localStorage.setItem("tmp", JSON.stringify(this.treeData));
+      this.renderDocs();
+    },
+
+    renderDocs() {
+      let tree = this.treeData;
+      const docs = this.apiDocs;
+      let tmp = {};
+      //alert(JSON.stringify(docs))
+      let arr = [];
+      for (let key in docs) {
+        if (arr.indexOf(docs[key]["type"]) == -1) {
+          arr.push(docs[key]["type"]);
+          tmp[docs[key]["type"]] = {
+            kind: "DOCS",
+            name: docs[key]["type"],
+            description: "",
+            fields: [],
+            inputFields: null,
+            interfaces: [],
+            title: docs[key]["type"],
+            children: [],
+            type: "DOCS",
+            expend: true,
+            render: (h, { root, node, data }) => {
+              let that = this;
+              return h(
+                "span",
+                {
+                  style: {
+                    display: "inline-block",
+                    width: "100%",
+                    cursor: "pointer"
+                  },
+                  on: {
+                    click() {
+                      that.showAPIInfo(data);
+                    }
+                  }
+                },
+                [
+                  h("span", [
+                    h("Icon", {
+                      props: {
+                        type: "ios-book-outline"
+                      },
+                      style: {
+                        marginRight: "8px"
+                      }
+                    }),
+                    h("span", data.title)
+                  ])
+                ]
+              );
+            }
+          };
+        }
+        let dicItem = this.dic[key];
+        if (dicItem) {
+          dicItem["title"] = docs[key]["name"];
+          tmp[docs[key]["type"]]["children"].push(dicItem);
+          tmp[docs[key]["type"]]["fields"].push(dicItem);
+        }
+      }
+      for (let ii in tmp) {
+        tree.push(tmp[ii]);
+      }
+      this.treeData = tree;
     },
 
     showAPIInfo(info) {
       // alert(JSON.stringify(info));
-      this.setApiInfo({ info: info });
-      this.setHistoryList(info);
-      this.changeDrawerShow({ show: true });
+      if (info.type !== "DOCS") {
+        this.setApiInfo({ info: info });
+        this.setHistoryList(info);
+        this.changeDrawerShow({ show: true });
+      }
     },
 
     // selectChange(e) {
@@ -719,7 +788,7 @@ export default {
           );
         }
       }
-      this.menu = 1
+      this.menu = 1;
     },
 
     openSettings() {
