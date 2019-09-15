@@ -36,7 +36,7 @@
       </i-col>
       <i-col :xs="12" :sm="12" :md="18" :lg="18">
         <Row align="top" justify="start">
-          <i-col span="12">
+          <i-col span="12" class="padding-right">
             <div class="fullTitle">
               <span>Query / Mutation</span>
               <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyCode" />
@@ -87,16 +87,23 @@
               language="json"
               :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
             />
-            <Input
+            <MonacoEditor
+              v-if="check == 1"
+              class="editor"
+              theme="vs"
+              :options="monacoOptions"
+              v-model="headers"
+              :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
+            />
+            <!-- <Input
               v-model="headers"
               type="textarea"
-              :style="fullHeight > 0 ? 'margin-top: 2px;max-height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
+              :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
               :placeholder="`请以key:value的形式输入，多个请换行，如：\nauthorization:yourtoken\ntimeout:1`"
-              :autosize="{minRows: 6}"
-            ></Input>
+            ></Input>-->
             <!-- :style="fullHeight > 0 ? 'height:' + (fullHeight - 54) + 'px;' : ''" -->
           </i-col>
-          <i-col span="12">
+          <i-col span="12" class="padding-left">
             <div class="fullTitle">
               <span>Result</span>
               <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyResult" />
@@ -217,6 +224,7 @@ export default {
       "setDic",
       "setHistoryList"
     ]),
+
     getHeader() {
       let header = JSON.parse(localStorage.getItem("headers")) || "";
       let tmp = "";
@@ -369,21 +377,21 @@ export default {
             typeof tmp["fields"] === "object" &&
             tmp["fields"].length > 0
           ) {
-            tmp["expend"] = true;
+            tmp["expend"] = false;
             tmp = fields2children(tmp, type_);
           } else if (
             tmp["args"] &&
             typeof tmp["args"] === "object" &&
             tmp["args"].length > 0
           ) {
-            tmp["expend"] = true;
+            tmp["expend"] = false;
             tmp = args2children(tmp, type_);
           } else if (
             tmp["inputFields"] &&
             typeof tmp["inputFields"] === "object" &&
             tmp["inputFields"].length > 0
           ) {
-            tmp["expend"] = true;
+            tmp["expend"] = false;
             tmp = input_fields2children(tmp, type_);
           } else {
             tmp["render"] = (h, { root, node, data }) => {
@@ -402,7 +410,7 @@ export default {
                     {
                       on: {
                         click(e) {
-                          that.showAPIInfo(data);
+                          that.showAPIInfo(data, node);
                         }
                       }
                     },
@@ -465,7 +473,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -513,7 +521,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -561,7 +569,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -608,6 +616,8 @@ export default {
       let o4 = [];
       newObject[0] = o2;
       newObject[1] = o1;
+      delete newObject[0]
+      delete newObject[1]
       if (newObject.length > 2) {
         o4 = newObject.slice(2);
         o3 = {
@@ -621,7 +631,7 @@ export default {
           children: o4,
           type_: "Schema",
           type: "Schema",
-          expend: true,
+          expend: false,
           render: (h, { root, node, data }) => {
             let that = this;
             return h(
@@ -634,7 +644,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -698,7 +708,7 @@ export default {
                   },
                   on: {
                     click() {
-                      that.showAPIInfo(data);
+                      that.showAPIInfo(data, node);
                     }
                   }
                 },
@@ -732,12 +742,22 @@ export default {
       this.treeData = tree;
     },
 
-    showAPIInfo(info) {
-      //if (info.type !== "DOCS") {
-      this.setApiInfo({ info: info });
-      this.setHistoryList(info);
-      this.changeDrawerShow({ show: true });
-      //}
+    showAPIInfo(info, node) {
+      //alert(JSON.stringify())
+      let arr = [];
+      for (let i = 0; i < this.treeData.length; i++) {
+        arr.push(this.treeData[i]["name"]);
+      }
+      let key = arr.indexOf(info.name);
+      if (key > -1) {
+        document.querySelectorAll('div.ivu-tree > ul.ivu-tree-children > li > span.ivu-tree-arrow')[key].click();
+      } else {
+        if (info.type !== "DOCS") {
+          this.setApiInfo({ info: info });
+          this.setHistoryList(info);
+          this.changeDrawerShow({ show: true });
+        }
+      }
     },
 
     // selectChange(e) {
@@ -868,7 +888,7 @@ export default {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #fafafa;
+  background: #fffffe;
 }
 
 .editor {
@@ -943,4 +963,12 @@ export default {
 span.a {
   cursor: pointer;
 }
+
+/* textarea.ivu-input {
+  border: none;
+}
+
+textarea.ivu-input:hover {
+  border: none;
+} */
 </style>

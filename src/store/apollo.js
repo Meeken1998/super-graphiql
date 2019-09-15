@@ -4,14 +4,6 @@ const state = {
     dic: {},
     historyList: [],
     nowHistory: 0,
-    // apiTypes: [
-    //     '',
-    //     '用户管理',
-    //     '权限管理',
-    //     '用户池管理',
-    //     '社会化登录',
-    //     'MFA'
-    // ],
     apiDocs: {
         getClientWhenSdkInit: {
             name: '初始化',
@@ -126,12 +118,12 @@ const state = {
         queryMFA: {
             name: '查询 MFA 信息',
             brief: '通过用户 id 和用户池 id 参数来查询一个用户的 MFA 信息，此时 userId 和 userPoolId 两个参数必填。\n也可以通过 MFA 主体的 id 来查询 MFA 的信息，此时只需传入 _id 参数，userId 和 userPoolId 参数可以不传。',
-            type: '用户管理' 
+            type: 'MFA 管理' 
         },
         changeMFA: {
             name: '修改 MFA 信息',
             brief: '通过用户 id 和用户池 id 参数来查询一个用户的 MFA 信息，此时 userId 和 userPoolId 两个参数必填。\n也可以通过 MFA 主体的 id 来查询 MFA 的信息，此时只需传入 _id 参数，userId 和 userPoolId 参数可以不传。',
-            type: '用户管理' 
+            type: 'MFA 管理' 
         },
         GetUserAuthorizedApps: {
             name: '查询用户授权过的 SSO 应用列表',
