@@ -75,15 +75,65 @@ const state = {
             brief: '此接口用来解析 JWT Token。',
             type: '用户管理'
         },
+
+        client: {
+            type: '用户池管理'
+        },
+        userClients: {
+            type: '用户池管理'
+        },
+        userClientTypes: {
+            type: '用户池管理'
+        },
+        isClientOfUser: {
+            type: '用户池管理'
+        },
+        userClientList: {
+            type: '用户池管理'
+        },
+        isClientBelongToUser: {
+            type: '用户池管理'
+        },
+        queryClient: {
+            type: '用户池管理'
+        },
+        getClientWhenSdkInit: {
+            type: '用户池管理'
+        },
+        UserClientType: {
+            type: '用户池管理'
+        },
+        UserClient: {
+            type: '用户池管理'
+        },
+        PagedUserClients: {
+            type: '用户池管理'
+        },
+        PagedUserClientList: {
+            type: '用户池管理'
+        },
+        pagedUserClientListItem: {
+            type: '用户池管理'
+        },
+        newClient: {
+            type: '用户池管理'
+        },
+        removeUserClients: {
+            type: '用户池管理'
+        },
+        updateUserClient: {
+            type: '用户池管理'
+        },
+        
         bindOtherOAuth: {
             name: '绑定社会化登录',
             brief: '用户绑定第三方登录方式。此接口发送 UserToken。',
-            type: '用户管理'
+            type: '社会化登录'
         },
         unbindOtherOAuth: {
             name: '取消绑定社会化登录',
             brief: '用户解绑第三方登录方式。此接口发送 UserToken。',
-            type: '用户管理'
+            type: '社会化登录'
         },
         unbindEmail: {
             name: '解绑邮箱',
@@ -93,37 +143,37 @@ const state = {
         setInvitationState: {
             name: '开启/关闭手机号注册白名单限制',
             brief: '开启或关闭手机号注册时的白名单限制。',
-            type: '用户管理' 
+            type: '注册白名单' 
         },
         queryInvitationState: {
             name: '查看用户池的手机号白名单开启状态',
             brief: '此接口需要发送 Token，建议直接使用 OwnerToken。',
-            type: '用户管理' 
+            type: '注册白名单' 
         },
         addToInvitation: {
             name: '增加手机号到白名单',
             brief: '此接口需要发送 Token，建议直接使用 OwnerToken。',
-            type: '用户管理' 
+            type: '注册白名单' 
         },
         removeFromInvitation: {
             name: '从白名单中删除手机号',
             brief: '此接口需要发送 Token，建议直接使用 OwnerToken。',
-            type: '用户管理' 
+            type: '注册白名单' 
         },
         queryInvitation: {
             name: '查看白名单中的手机号',
             brief: '此接口需要发送 Token，建议直接使用 OwnerToken。',
-            type: '用户管理' 
+            type: '注册白名单' 
         },
         queryMFA: {
             name: '查询 MFA 信息',
             brief: '通过用户 id 和用户池 id 参数来查询一个用户的 MFA 信息，此时 userId 和 userPoolId 两个参数必填。\n也可以通过 MFA 主体的 id 来查询 MFA 的信息，此时只需传入 _id 参数，userId 和 userPoolId 参数可以不传。',
-            type: 'MFA 管理' 
+            type: 'MFA 多因素认证' 
         },
         changeMFA: {
             name: '修改 MFA 信息',
             brief: '通过用户 id 和用户池 id 参数来查询一个用户的 MFA 信息，此时 userId 和 userPoolId 两个参数必填。\n也可以通过 MFA 主体的 id 来查询 MFA 的信息，此时只需传入 _id 参数，userId 和 userPoolId 参数可以不传。',
-            type: 'MFA 管理' 
+            type: 'MFA 多因素认证' 
         },
         GetUserAuthorizedApps: {
             name: '查询用户授权过的 SSO 应用列表',
@@ -134,6 +184,54 @@ const state = {
             name: '撤回用户对 SSO 应用的授权',
             brief: '此接口用于撤回一个用户池内，某个用户对该用户池下的某个 SSO 应用的授权。撤回授权后，用户在 SSO 登录页面登录时，会再次显示确权页面。',
             type: '用户管理' 
+        },
+        getWebhookDetail: {
+            type: 'WebHook API' 
+        },
+        getAllWebhooks: {
+            type: 'WebHook API' 
+        },
+        getWebhookLogDetail: {
+            type: 'WebHook API' 
+        },
+        getWebhookLogs: {
+            type: 'WebHook API' 
+        },
+        getWebhookSettingOptions: {
+            type: 'WebHook API' 
+        },
+        ClientWebhook: {
+            type: 'WebHook API' 
+        },
+        WebhookEvent: {
+            type: 'WebHook API' 
+        },
+        WebhookLog: {
+            type: 'WebHook API' 
+        },
+        WebhookRequestType: {
+            type: 'WebHook API' 
+        },
+        WebhookResponseType: {
+            type: 'WebHook API' 
+        },
+        WebhookSettingOptions: {
+            type: 'WebHook API' 
+        },
+        WebhookContentType: {
+            type: 'WebHook API' 
+        },
+        addClientWebhook: {
+            type: 'WebHook API' 
+        },
+        updateClientWebhook: {
+            type: 'WebHook API' 
+        },
+        deleteClientWebhook: {
+            type: 'WebHook API' 
+        },
+        SendWebhookTest: {
+            type: 'WebHook API' 
         },
     }
 }

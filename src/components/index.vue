@@ -616,8 +616,6 @@ export default {
       let o4 = [];
       newObject[0] = o2;
       newObject[1] = o1;
-      delete newObject[0]
-      delete newObject[1]
       if (newObject.length > 2) {
         o4 = newObject.slice(2);
         o3 = {
@@ -664,7 +662,8 @@ export default {
             );
           }
         };
-        let tmp = newObject.slice(0, 2);
+        //let tmp = newObject.slice(0, 2);
+        let tmp = [];
         tmp.push(o3);
         this.treeData = tmp;
       } else {
@@ -731,7 +730,9 @@ export default {
         }
         let dicItem = this.dic[key];
         if (dicItem) {
-          dicItem["title"] = docs[key]["name"];
+          if (docs[key]["name"]) {
+            dicItem["title"] = docs[key]["name"];
+          }
           tmp[docs[key]["type"]]["children"].push(dicItem);
           tmp[docs[key]["type"]]["fields"].push(dicItem);
         }
@@ -739,6 +740,9 @@ export default {
       for (let ii in tmp) {
         tree.push(tmp[ii]);
       }
+      let schemas = tree[0];
+      tree = tree.slice(1);
+      tree.push(schemas);
       this.treeData = tree;
     },
 
@@ -750,7 +754,11 @@ export default {
       }
       let key = arr.indexOf(info.name);
       if (key > -1) {
-        document.querySelectorAll('div.ivu-tree > ul.ivu-tree-children > li > span.ivu-tree-arrow')[key].click();
+        document
+          .querySelectorAll(
+            "div.ivu-tree > ul.ivu-tree-children > li > span.ivu-tree-arrow"
+          )
+          [key].click();
       } else {
         if (info.type !== "DOCS") {
           this.setApiInfo({ info: info });
@@ -771,8 +779,8 @@ export default {
         let dic = this.dic;
         let arr = [];
         for (let key in dic) {
-          if (key.toLowerCase().indexOf(val.toLowerCase()) > -1) {
-            arr.push(dic[key].name);
+          if (key.toLowerCase().indexOf(val.toLowerCase()) > -1 && this.apiDocs[dic[key].name]) {
+            arr.push('[' + (dic[key]._type || 'Schema')  + '] ' + dic[key].name);
           }
         }
         // alert(JSON.stringify(arr));
@@ -784,10 +792,14 @@ export default {
     },
 
     selectSearchItem(e) {
-      if (this.dic[e]) {
+      let ee = e
+      if(ee.indexOf('] ') > -1) {
+        ee = ee.split('] ')[1]
+      }
+      if (this.dic[ee]) {
         this.searchValue = "";
-        this.setApiInfo({ info: this.dic[e] });
-        this.setHistoryList(this.dic[e]);
+        this.setApiInfo({ info: this.dic[ee] });
+        this.setHistoryList(this.dic[ee]);
         this.changeDrawerShow({ show: true });
       }
     },
