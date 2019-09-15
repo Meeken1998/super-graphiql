@@ -33,7 +33,7 @@
           </span>
         </div>
         <p>
-          {{ ((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || apiDocs[apiInfo['name']]['brief'] || '暂无描述，详情请见文档：' }}
+          {{ ((apiInfo.description && apiInfo.description.length > 0) && apiInfo.description) || (apiDocs[apiInfo['name']] && apiDocs[apiInfo['name']]['brief']) || '暂无描述，详情请见文档：' }}
           <a
             v-if="!(apiInfo.description && apiInfo.description.length > 0)"
             href="https://docs.authing.cn/authing/sdk/open-graphql"
@@ -55,7 +55,12 @@
               {{ apiInfo.name }} {
             </Col>
             <Col v-for="(item, index) in fields" :key="index" span="12" class="setfontsize">
-              <span class="text">
+              <span
+                @click="findInDic(apiInfo.name == 'Schemas' ? item.name : item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                    ? item.type.name
+                    : item.type.kind).replace('NON_NULL', '必填').replace('NON_NULL', '必填'))"
+                class="text"
+              >
                 {{ item.name }}
                 <span style="color: #000;margin: 0 3px;">:</span>
               </span>
@@ -101,7 +106,12 @@
             <Col span="24" class="setfontsize apiname">{{ apiInfo.name }} (</Col>
 
             <Col v-for="(item, index) in args" :key="index" span="12" class="setfontsize">
-              <span class="text">
+              <span
+                @click="findInDic(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
+                  ? item.type.name
+                  : item.type.kind))"
+                class="text"
+              >
                 {{ item.name }}
                 <span style="color: #000;margin: 0 3px;">:</span>
               </span>
@@ -124,8 +134,8 @@
                   ? item.type.name
                   : item.type.kind))"
                   @click="findInDic(item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
-                    ? item.type.name
-                    : item.type.kind).replace('NON_NULL', '必填'))"
+                  ? item.type.name
+                  : item.type.kind))"
                 >
                   {{ item.type.ofType && item.type.ofType.name ? item.type.ofType.name : (item.type.name
                   ? item.type.name
@@ -378,8 +388,8 @@ export default {
       let str = "";
       let that = this;
       function getArgs(list, showType) {
-        if(!list) {
-          return false
+        if (!list) {
+          return false;
         }
         let tmp = list.args || list.inputFields || list.fields || [];
         let arr = [];
