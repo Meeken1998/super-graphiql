@@ -9,15 +9,27 @@
         :active-name="menu"
         @on-select="menuOnSelect"
       >
-        <MenuItem name="1">
-          <Icon type="ios-game-controller-b" />Super GQLi
-        </MenuItem>
-        <MenuItem name="2">
-          <Icon type="ios-construct" />服务配置
-        </MenuItem>
-        <MenuItem name="3">
-          <Icon type="ios-play" />调试运行
-        </MenuItem>
+        <div class="flex-row">
+          <div>
+            <MenuItem name="1">
+              <Icon type="ios-game-controller-b" />Super GQLi
+            </MenuItem>
+            <MenuItem name="2">
+              <Icon type="ios-construct" />服务配置
+            </MenuItem>
+            <MenuItem name="3">
+              <Icon type="ios-play" />调试运行
+            </MenuItem>
+          </div>
+
+          <Submenu name="1">
+            <template slot="title">
+              <Icon type="ios-paper" />学习 GraphQL
+            </template>
+            <a href="https://graphql.cn/learn/" target="_blank"><MenuItem name="1-1">入门 GraphQL</MenuItem></a>
+            <a href="https://graphql.cn/code/" target="_blank"><MenuItem name="1-1">代码调用库</MenuItem></a>
+          </Submenu>
+        </div>
       </Menu>
     </div>
     <Row align="top" justify="start">
@@ -128,14 +140,14 @@
           </Select>
           <p>关于用户管理的 API 都在此 GraphQL 源内</p>
         </FormItem>
-        <FormItem label="配置请求头（header）">
+        <!-- <FormItem label="配置请求头（header）">
           <Input
             v-model="headers"
             type="textarea"
             :autosize="{minRows: 2,maxRows: 20}"
             :placeholder="`请以key:value的形式输入，多个请换行，如：\nauthorization:yourtoken\ntimeout:1`"
           ></Input>
-        </FormItem>
+        </FormItem>-->
       </Form>
     </Modal>
   </div>
@@ -157,11 +169,16 @@ export default {
       check: 0,
       settingShow: false,
       settings: {
-        url: "https://users.authing.cn/graphql"
+        url:
+          localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+            ? "https://oauth.authing.cn/graphql"
+            : "https://users.authing.cn/graphql"
       },
       headers: "",
-      gqlUrl: "https://users.authing.cn/graphql",
-      urlList: ["https://users.authing.cn/graphql"],
+      urlList: [
+        "https://users.authing.cn/graphql",
+        "https://oauth.authing.cn/graphql"
+      ],
       code: "",
       variables: "",
       result: "",
@@ -204,11 +221,14 @@ export default {
           that.timer = false;
         }, 400);
       }
+    },
+    code() {
+      this.code = this.code.replace(/\u00A0/g, " ");
     }
   },
   mounted() {
-    this.getList();
     this.getHeader();
+    this.getList();
     const that = this;
     window.onresize = () => {
       return (() => {
@@ -236,6 +256,13 @@ export default {
       } else {
         this.headers = "";
       }
+      if (
+        localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+      ) {
+        this.settings.url = "https://oauth.authing.cn/graphql";
+      } else {
+        this.settings.url = "https://users.authing.cn/graphql";
+      }
     },
     async getList() {
       localStorage.setItem(
@@ -243,7 +270,9 @@ export default {
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
       );
       let that = this;
-      let res = await graphqlQuery({
+      this.treeData = [];
+      this.dic = {};
+      let gqls = {
         query: gql`
           query IntrospectionQuery {
             __schema {
@@ -343,7 +372,15 @@ export default {
           }
         `,
         variables: {}
-      });
+      };
+      let res;
+      if (
+        localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+      ) {
+        res = await graphqlQuery(gqls, "OAuthClient");
+      } else {
+        res = await graphqlQuery(gqls);
+      }
       if (res.data && res.data.__schema && res.data.__schema.types) {
         that.res = res.data.__schema.types;
         this.startDeal();
@@ -363,6 +400,13 @@ export default {
         if (tmp["name"] && typeof tmp["name"] === "string") {
           tmp["title"] = tmp["name"];
           let type_ = null;
+          //oauth 兼容
+          if (tmp["title"] == "OAuthQuery") {
+            tmp["title"] = "Query";
+          }
+          if (tmp["title"] == "OAuthMutation") {
+            tmp["title"] = "Mutation";
+          }
           if (tmp["title"] == "Query" || tmp["title"] == "Mutation") {
             type_ = tmp["title"];
           } else {
@@ -593,6 +637,14 @@ export default {
       };
       for (let keys in oldObject) {
         let insert = name2title(oldObject[keys]);
+        if (insert["name"] == "OAuthQuery") {
+          insert["name"] = "Query";
+          insert["title"] = "Query";
+        }
+        if (insert["name"] == "OAuthMutation") {
+          insert["name"] = "Mutation";
+          insert["title"] = "Query";
+        }
         if (insert["name"] == "Query" || insert["name"] == "Mutation") {
           newObject.unshift(insert);
           try {
@@ -607,6 +659,11 @@ export default {
           insert["name"].indexOf("__") == -1
         ) {
           newObject.push(insert);
+          if (insert.name == "user") {
+            insert._type = "Query";
+            insert.type_ = "Query";
+            insert.name = "User";
+          }
           this.dic[insert["name"]] = insert;
         }
       }
@@ -680,7 +737,7 @@ export default {
       const docs = this.apiDocs;
       let tmp = {};
       //alert(JSON.stringify(docs))
-      let arr = [];
+      let arr = [""];
       for (let key in docs) {
         if (arr.indexOf(docs[key]["type"]) == -1) {
           arr.push(docs[key]["type"]);
@@ -748,6 +805,7 @@ export default {
 
     showAPIInfo(info, node) {
       //alert(JSON.stringify())
+      const that = this;
       let arr = [];
       for (let i = 0; i < this.treeData.length; i++) {
         arr.push(this.treeData[i]["name"]);
@@ -759,10 +817,29 @@ export default {
             "div.ivu-tree > ul.ivu-tree-children > li > span.ivu-tree-arrow"
           )
           [key].click();
+        if (info.children.length == 0) {
+          let newurl =
+            that.settings.url == "https://users.authing.cn/graphql"
+              ? "https://oauth.authing.cn/graphql"
+              : "https://users.authing.cn/graphql";
+          that.$Modal.confirm({
+            title: "是否更换 GraphQL 地址",
+            content: `<p>调用这类 API 需要把源切换为</p><p>${newurl}</p>`,
+            onOk: () => {
+              that.settings.url = newurl;
+              that.settingOK();
+            },
+            onCancel: () => {}
+          });
+        }
       } else {
         if (info.type !== "DOCS") {
-          this.setApiInfo({ info: info });
-          this.setHistoryList(info);
+          let info_ = info;
+          if (info_.name == "user" || info_.name == "registerToken") {
+            info_._type = "Query";
+          }
+          this.setApiInfo({ info: info_ });
+          this.setHistoryList(info_);
           this.changeDrawerShow({ show: true });
         }
       }
@@ -779,8 +856,8 @@ export default {
         let dic = this.dic;
         let arr = [];
         for (let key in dic) {
-          if (key.toLowerCase().indexOf(val.toLowerCase()) > -1 && this.apiDocs[dic[key].name]) {
-            arr.push('[' + (dic[key]._type || 'Schema')  + '] ' + dic[key].name);
+          if (key.indexOf(val) > -1 && this.apiDocs[dic[key].name]) {
+            arr.push("[" + (dic[key]._type || "Schema") + "] " + dic[key].name);
           }
         }
         // alert(JSON.stringify(arr));
@@ -792,14 +869,24 @@ export default {
     },
 
     selectSearchItem(e) {
-      let ee = e
-      if(ee.indexOf('] ') > -1) {
-        ee = ee.split('] ')[1]
+      let ee = e;
+      if (ee.indexOf("] ") > -1) {
+        ee = ee.split("] ")[1];
       }
       if (this.dic[ee]) {
+        let info = this.dic[ee];
+        if (info["name"] == "user") {
+          info._type = "Query";
+          info.type_ = "Query";
+          info.name = "User";
+        }
+        if (info["name"] == "refreshToken") {
+          info._type = "Query";
+          info.type_ = "Query";
+        }
         this.searchValue = "";
-        this.setApiInfo({ info: this.dic[ee] });
-        this.setHistoryList(this.dic[ee]);
+        this.setApiInfo({ info: info });
+        this.setHistoryList(info);
         this.changeDrawerShow({ show: true });
       }
     },
@@ -838,6 +925,8 @@ export default {
         }
       }
       localStorage.setItem("headers", JSON.stringify(obj));
+      localStorage.setItem("gqlurl", this.settings.url);
+      this.getList();
       this.getHeader();
       this.$Message.success("配置成功");
     },
@@ -852,28 +941,38 @@ export default {
       try {
         if (this.code.toLowerCase().indexOf("mutation") > -1) {
           //alert(this.code);
-          res = await graphqlMutation({
-            mutation: gql`
-              ${this.code}
-            `,
-            variables: JSON.parse(
-              this.variables.length > 0 ? this.variables : "{}"
-            )
-            //variables: {}
-          });
+          res = await graphqlMutation(
+            {
+              mutation: gql`
+                ${this.code}
+              `,
+              variables: JSON.parse(
+                this.variables.length > 0 ? this.variables : "{}"
+              )
+              //variables: {}
+            },
+            localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+              ? "OAuthClient"
+              : null
+          );
         } else {
-          res = await graphqlQuery({
-            query: gql`
-              ${this.code}
-            `,
-            variables: JSON.parse(
-              this.variables.length > 0 ? this.variables : "{}"
-            )
-            // variables: {
-            //   token:
-            //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
-            // }
-          });
+          res = await graphqlQuery(
+            {
+              query: gql`
+                ${this.code}
+              `,
+              variables: JSON.parse(
+                this.variables.length > 0 ? this.variables : "{}"
+              )
+              // variables: {
+              //   token:
+              //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
+              // }
+            },
+            localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+              ? "OAuthClient"
+              : null
+          );
         }
         this.result = JSON.stringify(res, null, 4);
       } catch (err) {
@@ -961,7 +1060,7 @@ export default {
 }
 
 .fullTitle {
-  padding: 0 5px;
+  padding: 0 11px;
   width: 100%;
   height: 30px;
   display: flex;
@@ -972,8 +1071,24 @@ export default {
   font-weight: bold;
 }
 
+.padding-right {
+  border-right: 2px solid #f3f3f3;
+}
+
+.padding-left {
+  border-left: 2px solid #f3f3f3;
+}
+
 span.a {
   cursor: pointer;
+}
+
+.flex-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* textarea.ivu-input {
@@ -983,4 +1098,7 @@ span.a {
 textarea.ivu-input:hover {
   border: none;
 } */
+.ivu-menu-item-selected {
+  color: rgba(255,255,255,.7) !important;
+}
 </style>
