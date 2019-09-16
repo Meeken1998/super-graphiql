@@ -22,12 +22,16 @@
             </MenuItem>
           </div>
 
-          <Submenu name="1">
+          <Submenu>
             <template slot="title">
               <Icon type="ios-paper" />学习 GraphQL
             </template>
-            <a href="https://graphql.cn/learn/" target="_blank"><MenuItem name="1-1">入门 GraphQL</MenuItem></a>
-            <a href="https://graphql.cn/code/" target="_blank"><MenuItem name="1-1">代码调用库</MenuItem></a>
+            <a href="https://graphql.cn/learn/" target="_blank">
+              <MenuItem>入门 GraphQL</MenuItem>
+            </a>
+            <a href="https://graphql.cn/code/" target="_blank">
+              <MenuItem>代码调用库</MenuItem>
+            </a>
           </Submenu>
         </div>
       </Menu>
@@ -664,8 +668,17 @@ export default {
             insert.type_ = "Query";
             insert.name = "User";
           }
+          if (insert.name == "refreshToken" && this.dic[insert.name]) {
+            insert.name = "RefreshToken";
+            insert._type = "Schema";
+            insert.type_ = "Schema";
+            //insert.type.name = "RefreshToken";
+          }
           this.dic[insert["name"]] = insert;
         }
+      }
+      if (this.dic["refreshToken"]) {
+        this.dic["refreshToken"]["type"]["name"] = "RefreshToken";
       }
       let o1 = newObject[0];
       let o2 = newObject[1];
@@ -1099,6 +1112,6 @@ textarea.ivu-input:hover {
   border: none;
 } */
 .ivu-menu-item-selected {
-  color: rgba(255,255,255,.7) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 </style>
