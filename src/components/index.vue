@@ -5,15 +5,18 @@
       <Menu
         style="width: 100%;"
         mode="horizontal"
-        theme="dark"
+        theme="primary"
         :active-name="menu"
         @on-select="menuOnSelect"
       >
         <div class="flex-row">
           <div>
-            <MenuItem name="1">
-              <Icon type="ios-game-controller-b" />Super GQLi
-            </MenuItem>
+            <a href="https://authing.cn/graphiql" target="_blank">
+              <MenuItem name="1">
+                <Icon type="ios-game-controller-b" />Super GQLi
+              </MenuItem>
+            </a>
+
             <MenuItem name="2">
               <Icon type="ios-construct" />服务配置
             </MenuItem>
@@ -1112,6 +1115,6 @@ textarea.ivu-input:hover {
   border: none;
 } */
 .ivu-menu-item-selected {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: #fff !important;
 }
 </style>
