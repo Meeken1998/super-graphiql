@@ -605,7 +605,7 @@ export default {
 
     getUrlInString(str) {
       let reg = /(http:\/\/|https:\/\/)((\w|=|\?|\.|\/|&|-|#)+)/g;
-      if(str && reg.exec(str)) {
+      if(str && str.indexOf('https://') > -1) {
         return reg.exec(str)[0]
       } else {
         return null

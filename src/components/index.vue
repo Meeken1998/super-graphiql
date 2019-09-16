@@ -5,15 +5,18 @@
       <Menu
         style="width: 100%;"
         mode="horizontal"
-        theme="dark"
+        theme="primary"
         :active-name="menu"
         @on-select="menuOnSelect"
       >
         <div class="flex-row">
           <div>
-            <MenuItem name="1">
-              <Icon type="ios-game-controller-b" />Super GQLi
-            </MenuItem>
+            <a href="https://authing.cn/graphiql" target="_blank">
+              <MenuItem name="1">
+                <Icon type="ios-game-controller-b" />Super GQLi
+              </MenuItem>
+            </a>
+
             <MenuItem name="2">
               <Icon type="ios-construct" />服务配置
             </MenuItem>
@@ -22,12 +25,16 @@
             </MenuItem>
           </div>
 
-          <Submenu name="1">
+          <Submenu>
             <template slot="title">
               <Icon type="ios-paper" />学习 GraphQL
             </template>
-            <a href="https://graphql.cn/learn/" target="_blank"><MenuItem name="1-1">入门 GraphQL</MenuItem></a>
-            <a href="https://graphql.cn/code/" target="_blank"><MenuItem name="1-1">代码调用库</MenuItem></a>
+            <a href="https://graphql.cn/learn/" target="_blank">
+              <MenuItem>入门 GraphQL</MenuItem>
+            </a>
+            <a href="https://graphql.cn/code/" target="_blank">
+              <MenuItem>代码调用库</MenuItem>
+            </a>
           </Submenu>
         </div>
       </Menu>
@@ -265,10 +272,10 @@ export default {
       }
     },
     async getList() {
-      localStorage.setItem(
-        "token",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
-      );
+      // localStorage.setItem(
+      //   "token",
+      //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
+      // );
       let that = this;
       this.treeData = [];
       this.dic = {};
@@ -664,8 +671,17 @@ export default {
             insert.type_ = "Query";
             insert.name = "User";
           }
+          if (insert.name == "refreshToken" && this.dic[insert.name]) {
+            insert.name = "RefreshToken";
+            insert._type = "Schema";
+            insert.type_ = "Schema";
+            //insert.type.name = "RefreshToken";
+          }
           this.dic[insert["name"]] = insert;
         }
+      }
+      if (this.dic["refreshToken"]) {
+        this.dic["refreshToken"]["type"]["name"] = "RefreshToken";
       }
       let o1 = newObject[0];
       let o2 = newObject[1];
@@ -1099,6 +1115,6 @@ textarea.ivu-input:hover {
   border: none;
 } */
 .ivu-menu-item-selected {
-  color: rgba(255,255,255,.7) !important;
+  color: #fff !important;
 }
 </style>
