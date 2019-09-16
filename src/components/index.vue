@@ -5,19 +5,38 @@
       <Menu
         style="width: 100%;"
         mode="horizontal"
-        theme="dark"
+        theme="primary"
         :active-name="menu"
         @on-select="menuOnSelect"
       >
-        <MenuItem name="1">
-          <Icon type="ios-game-controller-b" />Super GQLi
-        </MenuItem>
-        <MenuItem name="2">
-          <Icon type="ios-construct" />服务配置
-        </MenuItem>
-        <MenuItem name="3">
-          <Icon type="ios-play" />调试运行
-        </MenuItem>
+        <div class="flex-row">
+          <div>
+            <a href="https://authing.cn/graphiql" target="_blank">
+              <MenuItem name="1">
+                <Icon type="ios-game-controller-b" />Super GQLi
+              </MenuItem>
+            </a>
+
+            <MenuItem name="2">
+              <Icon type="ios-construct" />服务配置
+            </MenuItem>
+            <MenuItem name="3">
+              <Icon type="ios-play" />调试运行
+            </MenuItem>
+          </div>
+
+          <Submenu>
+            <template slot="title">
+              <Icon type="ios-paper" />学习 GraphQL
+            </template>
+            <a href="https://graphql.cn/learn/" target="_blank">
+              <MenuItem>入门 GraphQL</MenuItem>
+            </a>
+            <a href="https://graphql.cn/code/" target="_blank">
+              <MenuItem>代码调用库</MenuItem>
+            </a>
+          </Submenu>
+        </div>
       </Menu>
     </div>
     <Row align="top" justify="start">
@@ -36,7 +55,7 @@
       </i-col>
       <i-col :xs="12" :sm="12" :md="18" :lg="18">
         <Row align="top" justify="start">
-          <i-col span="12">
+          <i-col span="12" class="padding-right">
             <div class="fullTitle">
               <span>Query / Mutation</span>
               <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyCode" />
@@ -87,16 +106,23 @@
               language="json"
               :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
             />
-            <Input
+            <MonacoEditor
+              v-if="check == 1"
+              class="editor"
+              theme="vs"
+              :options="monacoOptions"
+              v-model="headers"
+              :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
+            />
+            <!-- <Input
               v-model="headers"
               type="textarea"
-              :style="fullHeight > 0 ? 'margin-top: 2px;max-height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
+              :style="fullHeight > 0 ? 'margin-top: 2px;height:' + (fullHeight - 62 - 60) / 2 + 'px;' : ''"
               :placeholder="`请以key:value的形式输入，多个请换行，如：\nauthorization:yourtoken\ntimeout:1`"
-              :autosize="{minRows: 6}"
-            ></Input>
+            ></Input>-->
             <!-- :style="fullHeight > 0 ? 'height:' + (fullHeight - 54) + 'px;' : ''" -->
           </i-col>
-          <i-col span="12">
+          <i-col span="12" class="padding-left">
             <div class="fullTitle">
               <span>Result</span>
               <Icon type="ios-trash" style="cursor: pointer" size="16" @click="emptyResult" />
@@ -121,14 +147,14 @@
           </Select>
           <p>关于用户管理的 API 都在此 GraphQL 源内</p>
         </FormItem>
-        <FormItem label="配置请求头（header）">
+        <!-- <FormItem label="配置请求头（header）">
           <Input
             v-model="headers"
             type="textarea"
             :autosize="{minRows: 2,maxRows: 20}"
             :placeholder="`请以key:value的形式输入，多个请换行，如：\nauthorization:yourtoken\ntimeout:1`"
           ></Input>
-        </FormItem>
+        </FormItem>-->
       </Form>
     </Modal>
   </div>
@@ -150,11 +176,16 @@ export default {
       check: 0,
       settingShow: false,
       settings: {
-        url: "https://users.authing.cn/graphql"
+        url:
+          localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+            ? "https://oauth.authing.cn/graphql"
+            : "https://users.authing.cn/graphql"
       },
       headers: "",
-      gqlUrl: "https://users.authing.cn/graphql",
-      urlList: ["https://users.authing.cn/graphql"],
+      urlList: [
+        "https://users.authing.cn/graphql",
+        "https://oauth.authing.cn/graphql"
+      ],
       code: "",
       variables: "",
       result: "",
@@ -177,7 +208,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("apollo", ["drawerShow"])
+    ...mapGetters("apollo", ["drawerShow", "apiDocs"])
   },
   watch: {
     searchValue() {
@@ -197,11 +228,14 @@ export default {
           that.timer = false;
         }, 400);
       }
+    },
+    code() {
+      this.code = this.code.replace(/\u00A0/g, " ");
     }
   },
   mounted() {
-    this.getList();
     this.getHeader();
+    this.getList();
     const that = this;
     window.onresize = () => {
       return (() => {
@@ -217,6 +251,7 @@ export default {
       "setDic",
       "setHistoryList"
     ]),
+
     getHeader() {
       let header = JSON.parse(localStorage.getItem("headers")) || "";
       let tmp = "";
@@ -228,14 +263,23 @@ export default {
       } else {
         this.headers = "";
       }
+      if (
+        localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+      ) {
+        this.settings.url = "https://oauth.authing.cn/graphql";
+      } else {
+        this.settings.url = "https://users.authing.cn/graphql";
+      }
     },
     async getList() {
-      localStorage.setItem(
-        "token",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
-      );
+      // localStorage.setItem(
+      //   "token",
+      //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
+      // );
       let that = this;
-      let res = await graphqlQuery({
+      this.treeData = [];
+      this.dic = {};
+      let gqls = {
         query: gql`
           query IntrospectionQuery {
             __schema {
@@ -335,7 +379,15 @@ export default {
           }
         `,
         variables: {}
-      });
+      };
+      let res;
+      if (
+        localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+      ) {
+        res = await graphqlQuery(gqls, "OAuthClient");
+      } else {
+        res = await graphqlQuery(gqls);
+      }
       if (res.data && res.data.__schema && res.data.__schema.types) {
         that.res = res.data.__schema.types;
         this.startDeal();
@@ -355,6 +407,13 @@ export default {
         if (tmp["name"] && typeof tmp["name"] === "string") {
           tmp["title"] = tmp["name"];
           let type_ = null;
+          //oauth 兼容
+          if (tmp["title"] == "OAuthQuery") {
+            tmp["title"] = "Query";
+          }
+          if (tmp["title"] == "OAuthMutation") {
+            tmp["title"] = "Mutation";
+          }
           if (tmp["title"] == "Query" || tmp["title"] == "Mutation") {
             type_ = tmp["title"];
           } else {
@@ -369,21 +428,21 @@ export default {
             typeof tmp["fields"] === "object" &&
             tmp["fields"].length > 0
           ) {
-            tmp["expend"] = true;
+            tmp["expend"] = false;
             tmp = fields2children(tmp, type_);
           } else if (
             tmp["args"] &&
             typeof tmp["args"] === "object" &&
             tmp["args"].length > 0
           ) {
-            tmp["expend"] = true;
+            tmp["expend"] = false;
             tmp = args2children(tmp, type_);
           } else if (
             tmp["inputFields"] &&
             typeof tmp["inputFields"] === "object" &&
             tmp["inputFields"].length > 0
           ) {
-            tmp["expend"] = true;
+            tmp["expend"] = false;
             tmp = input_fields2children(tmp, type_);
           } else {
             tmp["render"] = (h, { root, node, data }) => {
@@ -402,7 +461,7 @@ export default {
                     {
                       on: {
                         click(e) {
-                          that.showAPIInfo(data);
+                          that.showAPIInfo(data, node);
                         }
                       }
                     },
@@ -465,7 +524,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -513,7 +572,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -561,7 +620,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -585,6 +644,14 @@ export default {
       };
       for (let keys in oldObject) {
         let insert = name2title(oldObject[keys]);
+        if (insert["name"] == "OAuthQuery") {
+          insert["name"] = "Query";
+          insert["title"] = "Query";
+        }
+        if (insert["name"] == "OAuthMutation") {
+          insert["name"] = "Mutation";
+          insert["title"] = "Query";
+        }
         if (insert["name"] == "Query" || insert["name"] == "Mutation") {
           newObject.unshift(insert);
           try {
@@ -599,8 +666,22 @@ export default {
           insert["name"].indexOf("__") == -1
         ) {
           newObject.push(insert);
+          if (insert.name == "user") {
+            insert._type = "Query";
+            insert.type_ = "Query";
+            insert.name = "User";
+          }
+          if (insert.name == "refreshToken" && this.dic[insert.name]) {
+            insert.name = "RefreshToken";
+            insert._type = "Schema";
+            insert.type_ = "Schema";
+            //insert.type.name = "RefreshToken";
+          }
           this.dic[insert["name"]] = insert;
         }
+      }
+      if (this.dic["refreshToken"]) {
+        this.dic["refreshToken"]["type"]["name"] = "RefreshToken";
       }
       let o1 = newObject[0];
       let o2 = newObject[1];
@@ -621,7 +702,7 @@ export default {
           children: o4,
           type_: "Schema",
           type: "Schema",
-          expend: true,
+          expend: false,
           render: (h, { root, node, data }) => {
             let that = this;
             return h(
@@ -634,7 +715,7 @@ export default {
                 },
                 on: {
                   click() {
-                    that.showAPIInfo(data);
+                    that.showAPIInfo(data, node);
                   }
                 }
               },
@@ -654,7 +735,8 @@ export default {
             );
           }
         };
-        let tmp = newObject.slice(0, 2);
+        //let tmp = newObject.slice(0, 2);
+        let tmp = [];
         tmp.push(o3);
         this.treeData = tmp;
       } else {
@@ -663,13 +745,120 @@ export default {
       this.setDic(this.dic);
       localStorage.setItem("dic", JSON.stringify(this.dic));
       localStorage.setItem("tmp", JSON.stringify(this.treeData));
+      this.renderDocs();
     },
 
-    showAPIInfo(info) {
-      // alert(JSON.stringify(info));
-      this.setApiInfo({ info: info });
-      this.setHistoryList(info);
-      this.changeDrawerShow({ show: true });
+    renderDocs() {
+      let tree = this.treeData;
+      const docs = this.apiDocs;
+      let tmp = {};
+      //alert(JSON.stringify(docs))
+      let arr = [""];
+      for (let key in docs) {
+        if (arr.indexOf(docs[key]["type"]) == -1) {
+          arr.push(docs[key]["type"]);
+          tmp[docs[key]["type"]] = {
+            kind: "DOCS",
+            name: docs[key]["type"],
+            description: "",
+            fields: [],
+            inputFields: null,
+            interfaces: [],
+            title: docs[key]["type"],
+            children: [],
+            type: "DOCS",
+            expend: true,
+            render: (h, { root, node, data }) => {
+              let that = this;
+              return h(
+                "span",
+                {
+                  style: {
+                    display: "inline-block",
+                    width: "100%",
+                    cursor: "pointer"
+                  },
+                  on: {
+                    click() {
+                      that.showAPIInfo(data, node);
+                    }
+                  }
+                },
+                [
+                  h("span", [
+                    h("Icon", {
+                      props: {
+                        type: "ios-book-outline"
+                      },
+                      style: {
+                        marginRight: "8px"
+                      }
+                    }),
+                    h("span", data.title)
+                  ])
+                ]
+              );
+            }
+          };
+        }
+        let dicItem = this.dic[key];
+        if (dicItem) {
+          if (docs[key]["name"]) {
+            dicItem["title"] = docs[key]["name"];
+          }
+          tmp[docs[key]["type"]]["children"].push(dicItem);
+          tmp[docs[key]["type"]]["fields"].push(dicItem);
+        }
+      }
+      for (let ii in tmp) {
+        tree.push(tmp[ii]);
+      }
+      let schemas = tree[0];
+      tree = tree.slice(1);
+      tree.push(schemas);
+      this.treeData = tree;
+    },
+
+    showAPIInfo(info, node) {
+      //alert(JSON.stringify())
+      const that = this;
+      let arr = [];
+      for (let i = 0; i < this.treeData.length; i++) {
+        arr.push(this.treeData[i]["name"]);
+      }
+      let key = arr.indexOf(info.name);
+      if (key > -1) {
+        document
+          .querySelectorAll(
+            "div.ivu-tree > ul.ivu-tree-children > li > span.ivu-tree-arrow"
+          )
+          [key].click();
+        if (info.children.length == 0) {
+          let newurl =
+            that.settings.url == "https://users.authing.cn/graphql"
+              ? "https://oauth.authing.cn/graphql"
+              : "https://users.authing.cn/graphql";
+          that.$Modal.confirm({
+            title: "是否更换 GraphQL 地址",
+            content: `<p>调用这类 API 需要把源切换为</p><p>${newurl}</p>`,
+            onOk: () => {
+              that.settings.url = newurl;
+              that.settingOK();
+            },
+            onCancel: () => {}
+          });
+        }
+      } else {
+        if (info.type !== "DOCS") {
+          let info_ = info;
+          if (info_.name == "user" || info_.name == "registerToken") {
+            info_._type = "Query";
+          }
+          this.setApiInfo({ info: info_ });
+          this.setHistoryList(info_);
+          this.changeDrawerShow({ show: true });
+        }
+      }
     },
 
     // selectChange(e) {
@@ -683,8 +872,8 @@ export default {
         let dic = this.dic;
         let arr = [];
         for (let key in dic) {
-          if (key.toLowerCase().indexOf(val.toLowerCase()) > -1) {
-            arr.push(dic[key].name);
+          if (key.indexOf(val) > -1 && this.apiDocs[dic[key].name]) {
+            arr.push("[" + (dic[key]._type || "Schema") + "] " + dic[key].name);
           }
         }
         // alert(JSON.stringify(arr));
@@ -696,10 +885,24 @@ export default {
     },
 
     selectSearchItem(e) {
-      if (this.dic[e]) {
+      let ee = e;
+      if (ee.indexOf("] ") > -1) {
+        ee = ee.split("] ")[1];
+      }
+      if (this.dic[ee]) {
+        let info = this.dic[ee];
+        if (info["name"] == "user") {
+          info._type = "Query";
+          info.type_ = "Query";
+          info.name = "User";
+        }
+        if (info["name"] == "refreshToken") {
+          info._type = "Query";
+          info.type_ = "Query";
+        }
         this.searchValue = "";
-        this.setApiInfo({ info: this.dic[e] });
-        this.setHistoryList(this.dic[e]);
+        this.setApiInfo({ info: info });
+        this.setHistoryList(info);
         this.changeDrawerShow({ show: true });
       }
     },
@@ -719,7 +922,7 @@ export default {
           );
         }
       }
-      this.menu = 1
+      this.menu = 1;
     },
 
     openSettings() {
@@ -738,6 +941,8 @@ export default {
         }
       }
       localStorage.setItem("headers", JSON.stringify(obj));
+      localStorage.setItem("gqlurl", this.settings.url);
+      this.getList();
       this.getHeader();
       this.$Message.success("配置成功");
     },
@@ -752,28 +957,38 @@ export default {
       try {
         if (this.code.toLowerCase().indexOf("mutation") > -1) {
           //alert(this.code);
-          res = await graphqlMutation({
-            mutation: gql`
-              ${this.code}
-            `,
-            variables: JSON.parse(
-              this.variables.length > 0 ? this.variables : "{}"
-            )
-            //variables: {}
-          });
+          res = await graphqlMutation(
+            {
+              mutation: gql`
+                ${this.code}
+              `,
+              variables: JSON.parse(
+                this.variables.length > 0 ? this.variables : "{}"
+              )
+              //variables: {}
+            },
+            localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+              ? "OAuthClient"
+              : null
+          );
         } else {
-          res = await graphqlQuery({
-            query: gql`
-              ${this.code}
-            `,
-            variables: JSON.parse(
-              this.variables.length > 0 ? this.variables : "{}"
-            )
-            // variables: {
-            //   token:
-            //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
-            // }
-          });
+          res = await graphqlQuery(
+            {
+              query: gql`
+                ${this.code}
+              `,
+              variables: JSON.parse(
+                this.variables.length > 0 ? this.variables : "{}"
+              )
+              // variables: {
+              //   token:
+              //     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoiNzgwNzE4MzZAcXEuY29tIiwiaWQiOiI1YWU1ZTNhOTZmYzk0YzAwMDE1NjljOWIiLCJjbGllbnRJZCI6IjU5Zjg2YjQ4MzJlYjI4MDcxYmRkOTIxNCJ9LCJpYXQiOjE1Njc3NjM3NTksImV4cCI6MTU2OTA1OTc1OX0.T38xIo0KOzj_fec7JbTWA2JitBNAm-I9SsGuHn5hq7g"
+              // }
+            },
+            localStorage.getItem("gqlurl") == "https://oauth.authing.cn/graphql"
+              ? "OAuthClient"
+              : null
+          );
         }
         this.result = JSON.stringify(res, null, 4);
       } catch (err) {
@@ -800,7 +1015,7 @@ export default {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #fafafa;
+  background: #fffffe;
 }
 
 .editor {
@@ -861,7 +1076,7 @@ export default {
 }
 
 .fullTitle {
-  padding: 0 5px;
+  padding: 0 11px;
   width: 100%;
   height: 30px;
   display: flex;
@@ -872,7 +1087,34 @@ export default {
   font-weight: bold;
 }
 
+.padding-right {
+  border-right: 2px solid #f3f3f3;
+}
+
+.padding-left {
+  border-left: 2px solid #f3f3f3;
+}
+
 span.a {
   cursor: pointer;
+}
+
+.flex-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* textarea.ivu-input {
+  border: none;
+}
+
+textarea.ivu-input:hover {
+  border: none;
+} */
+.ivu-menu-item-selected {
+  color: #fff !important;
 }
 </style>
